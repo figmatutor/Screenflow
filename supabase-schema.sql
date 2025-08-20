@@ -62,16 +62,21 @@ CREATE POLICY "Enable delete for all users" ON public.users
 CREATE POLICY "Enable delete for all users" ON public.capture_sessions
     FOR DELETE USING (true);
 
--- 5. updated_at 자동 업데이트 함수
+-- 5. 기존 트리거 및 함수 정리 (중복 방지)
+DROP TRIGGER IF EXISTS update_users_updated_at ON public.users;
+DROP TRIGGER IF EXISTS update_capture_sessions_updated_at ON public.capture_sessions;
+DROP FUNCTION IF EXISTS update_updated_at_column();
+
+-- 6. updated_at 자동 업데이트 함수
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = NOW();
     RETURN NEW;
 END;
-$$ language 'plpgsql';
+$$ LANGUAGE 'plpgsql';
 
--- 6. updated_at 트리거 생성
+-- 7. updated_at 트리거 생성
 CREATE TRIGGER update_users_updated_at 
     BEFORE UPDATE ON public.users 
     FOR EACH ROW 

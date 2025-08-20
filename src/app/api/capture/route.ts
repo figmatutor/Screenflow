@@ -1,20 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ScreenshotCapture } from '@/lib/screenshot-capture';
 import { captureStore } from '@/lib/capture-store';
+import { createSuccessResponse, createErrorResponse, createOptionsResponse, createServerErrorResponse } from '@/lib/api-utils';
 
 export async function POST(request: NextRequest) {
   try {
     const { url, options } = await request.json();
     
     if (!url) {
-      return NextResponse.json({ error: 'URL is required' }, { status: 400 });
+      return createErrorResponse('URL is required');
     }
 
     // URL 유효성 검사
     try {
       new URL(url);
     } catch {
-      return NextResponse.json({ error: 'Invalid URL format' }, { status: 400 });
+      return createErrorResponse('Invalid URL format');
     }
 
     // 세션 ID 생성
@@ -37,14 +38,11 @@ export async function POST(request: NextRequest) {
       message: '스크린샷 캡처를 시작합니다...'
     };
 
-    return NextResponse.json(responseData);
+    return createSuccessResponse(responseData);
     
   } catch (error) {
     console.error('Capture API error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' }, 
-      { status: 500 }
-    );
+    return createServerErrorResponse();
   }
 }
 
@@ -92,16 +90,16 @@ export async function GET(request: NextRequest) {
   const sessionId = searchParams.get('sessionId');
   
   if (!sessionId) {
-    return NextResponse.json({ error: 'Session ID is required' }, { status: 400 });
+    return createErrorResponse('Session ID is required');
   }
   
   const captureInfo = captureStore.get(sessionId);
   
   if (!captureInfo) {
-    return NextResponse.json({ error: 'Session not found' }, { status: 404 });
+    return createErrorResponse('Session not found', 404);
   }
   
-  return NextResponse.json({
+  const responseData = {
     sessionId,
     status: captureInfo.status,
     ...(captureInfo.result && { 
@@ -112,5 +110,12 @@ export async function GET(request: NextRequest) {
       totalSteps: captureInfo.result.totalSteps
     }),
     ...(captureInfo.error && { error: captureInfo.error })
-  });
+  };
+  
+  return createSuccessResponse(responseData);
+}
+
+// OPTIONS 메서드 추가 (CORS preflight 처리)
+export async function OPTIONS() {
+  return createOptionsResponse();
 }
