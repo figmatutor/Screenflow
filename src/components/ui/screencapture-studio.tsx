@@ -23,6 +23,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import * as React from "react";
 import { Progress } from "@/components/ui/progress";
 import { Label } from "@/components/ui/field";
+import { BeamsBackground } from "@/components/ui/beams-background";
 
 interface UseAutoResizeTextareaProps {
     minHeight: number;
@@ -437,26 +438,30 @@ export function ScreencaptureStudio() {
     };
 
     return (
-        <div className="min-h-screen flex flex-col w-full items-center justify-center bg-black text-white p-6 relative overflow-hidden">
-            {/* 배경 효과 - Figma 스타일 적용 */}
-            <div className="absolute inset-0 w-full h-full overflow-hidden">
-                <div className="absolute top-0 left-1/4 w-96 h-96 bg-violet-500/10 rounded-full mix-blend-normal filter blur-[128px] animate-pulse" />
-                <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-indigo-500/10 rounded-full mix-blend-normal filter blur-[128px] animate-pulse delay-700" />
-                <div className="absolute top-1/4 right-1/3 w-64 h-64 bg-fuchsia-500/10 rounded-full mix-blend-normal filter blur-[96px] animate-pulse delay-1000" />
+        <BeamsBackground 
+            intensity="subtle" 
+            className="min-h-screen bg-black"
+        >
+            <div className="min-h-screen flex flex-col w-full items-center justify-center text-white p-6 relative">
+            {/* 배경 효과 - BeamsBackground와 조화롭게 조정 */}
+            <div className="absolute inset-0 w-full h-full overflow-hidden opacity-40">
+                <div className="absolute top-0 left-1/4 w-96 h-96 bg-violet-500/15 rounded-full mix-blend-screen filter blur-[128px] animate-pulse" />
+                <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-indigo-500/15 rounded-full mix-blend-screen filter blur-[128px] animate-pulse delay-700" />
+                <div className="absolute top-1/4 right-1/3 w-64 h-64 bg-fuchsia-500/15 rounded-full mix-blend-screen filter blur-[96px] animate-pulse delay-1000" />
                 
-                {/* 추가 Figma 스타일 blur 효과 (크롤링 페이지에서만) */}
+                {/* 크롤링 중 추가 효과 - BeamsBackground와 조화 */}
                 {currentStep === 'crawling' && (
                     <>
-                        <div className="absolute top-1/6 left-1/6 w-96 h-96 bg-violet-400/5 rounded-full mix-blend-normal filter blur-[128px] animate-pulse delay-500" />
-                        <div className="absolute bottom-1/6 left-2/3 w-96 h-96 bg-indigo-600/5 rounded-full mix-blend-normal filter blur-[128px] animate-pulse delay-1200" />
-                        <div className="absolute top-2/3 right-1/6 w-64 h-64 bg-fuchsia-600/5 rounded-full mix-blend-normal filter blur-[96px] animate-pulse delay-800" />
+                        <div className="absolute top-1/6 left-1/6 w-96 h-96 bg-violet-400/10 rounded-full mix-blend-plus-lighter filter blur-[128px] animate-pulse delay-500" />
+                        <div className="absolute bottom-1/6 left-2/3 w-96 h-96 bg-indigo-600/10 rounded-full mix-blend-plus-lighter filter blur-[128px] animate-pulse delay-1200" />
+                        <div className="absolute top-2/3 right-1/6 w-64 h-64 bg-fuchsia-600/10 rounded-full mix-blend-plus-lighter filter blur-[96px] animate-pulse delay-800" />
                     </>
                 )}
             </div>
 
-            {/* 헤더 - Figma 스타일 적용 */}
+            {/* 헤더 - Figma 스타일 적용 (배경 투명도 0%) */}
             <motion.div 
-                className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-black/50 border-b border-white/[0.05]"
+                className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-transparent border-b border-white/[0.05]"
                 initial={{ y: -100 }}
                 animate={{ y: 0 }}
                 transition={{ duration: 0.6 }}
@@ -956,6 +961,7 @@ export function ScreencaptureStudio() {
                     }}
                 />
             )}
-        </div>
+            </div>
+        </BeamsBackground>
     );
 }
