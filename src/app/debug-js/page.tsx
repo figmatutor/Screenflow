@@ -67,6 +67,25 @@ export default function DebugPage() {
     }
   };
 
+  const testPuppeteer = async () => {
+    addLog('Puppeteer 단독 테스트 시작');
+    try {
+      const response = await fetch('/api/test-puppeteer');
+      addLog(`Puppeteer 테스트 status: ${response.status}`);
+      const data = await response.json();
+      addLog(`Puppeteer 테스트 response: ${JSON.stringify(data)}`);
+      
+      if (response.status === 200) {
+        setResult('✅ Puppeteer 단독 테스트 성공');
+      } else {
+        setResult('❌ Puppeteer 단독 테스트 실패');
+      }
+    } catch (error) {
+      addLog(`❌ Puppeteer 테스트 오류: ${error}`);
+      setResult('❌ Puppeteer 테스트 오류');
+    }
+  };
+
   return (
     <div style={{ padding: '20px', fontFamily: 'monospace' }}>
       <h1>🔧 JavaScript 디버깅 페이지</h1>
@@ -80,6 +99,9 @@ export default function DebugPage() {
         </button>
         <button onClick={testFullFlow} style={{ padding: '10px' }}>
           전체 플로우 테스트
+        </button>
+        <button onClick={testPuppeteer} style={{ marginLeft: '10px', padding: '10px' }}>
+          Puppeteer 단독 테스트
         </button>
       </div>
 
