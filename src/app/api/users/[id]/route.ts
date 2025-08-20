@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin, User } from '@/lib/supabase'
 
 // GET: 특정 사용자 조회
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: any) {
   try {
     if (!supabaseAdmin) {
       return NextResponse.json(
@@ -14,7 +11,9 @@ export async function GET(
       )
     }
 
-    const { id } = await params
+    // params가 Promise인지 확인하고 처리
+    const resolvedParams = await Promise.resolve(params)
+    const { id } = resolvedParams
 
     const { data: user, error } = await supabaseAdmin
       .from('users')
@@ -49,10 +48,7 @@ export async function GET(
 }
 
 // PUT: 사용자 정보 수정
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: NextRequest, { params }: any) {
   try {
     if (!supabaseAdmin) {
       return NextResponse.json(
@@ -61,7 +57,8 @@ export async function PUT(
       )
     }
 
-    const { id } = await params
+    const resolvedParams = await Promise.resolve(params)
+    const { id } = resolvedParams
     const body = await request.json()
     const { email, name } = body as Pick<User, 'email' | 'name'>
 
@@ -136,10 +133,7 @@ export async function PUT(
 }
 
 // DELETE: 사용자 삭제
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(request: NextRequest, { params }: any) {
   try {
     if (!supabaseAdmin) {
       return NextResponse.json(
@@ -148,7 +142,8 @@ export async function DELETE(
       )
     }
 
-    const { id } = await params
+    const resolvedParams = await Promise.resolve(params)
+    const { id } = resolvedParams
 
     const { error } = await supabaseAdmin
       .from('users')
