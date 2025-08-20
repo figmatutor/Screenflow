@@ -72,8 +72,9 @@ export class AutoCaptureCrawler {
 
     const finalOptions = { ...this.defaultOptions, ...options };
     
-    console.log(`[AutoCaptureCrawler] 크롤링 및 캡처 시작: ${baseUrl}`);
-    console.log(`[AutoCaptureCrawler] 옵션:`, finalOptions);
+    console.log(`[AutoCaptureCrawler v2.0] 크롤링 및 캡처 시작: ${baseUrl}`);
+    console.log(`[AutoCaptureCrawler v2.0] 옵션:`, finalOptions);
+    console.log(`[AutoCaptureCrawler v2.0] QUALITY 옵션 완전 제거됨 - 새 코드 실행 중`);
 
     const crawledPages: CrawledPage[] = [];
     const visitedUrls = new Set<string>();
@@ -225,12 +226,12 @@ export class AutoCaptureCrawler {
       const pageTitle = await page.title().catch(() => 'Unknown Title');
       console.log(`[AutoCaptureCrawler] 페이지 제목: "${pageTitle}"`);
       
-      // 전체 페이지 스크린샷 캡처 (최적화됨)
-      console.log(`[AutoCaptureCrawler] 스크린샷 캡처 시작 (${order}): ${url}`);
+      // 전체 페이지 스크린샷 캡처 (최적화됨) v2.0
+      console.log(`[AutoCaptureCrawler] 스크린샷 캡처 시작 v2.0 (${order}): ${url}`);
       const fullScreenshot = await page.screenshot({
         fullPage: false, // viewport만 캡처 (더 빠름)
         type: 'png',
-        // PNG는 무손실 압축이므로 quality 옵션 제거
+        // PNG는 무손실 압축이므로 quality 옵션 완전 제거됨
         clip: { x: 0, y: 0, width: 800, height: 600 } // 고정 크기
       }) as Buffer;
       console.log(`[AutoCaptureCrawler] 스크린샷 캡처 완료: ${fullScreenshot.length} bytes`);
