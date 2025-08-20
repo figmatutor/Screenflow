@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ScreenshotCapture } from '@/lib/screenshot-capture';
-import { captureStore } from '@/lib/capture-store';
+import { captureStore } from '@/lib/capture-store-memory';
 import { createSuccessResponse, createErrorResponse, createOptionsResponse, createServerErrorResponse } from '@/lib/api-utils';
 
 export async function POST(request: NextRequest) {

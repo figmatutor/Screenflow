@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { captureStore } from '@/lib/capture-store';
+import { captureStore } from '@/lib/capture-store-memory';
 import { createOptionsResponse } from '@/lib/api-utils';
 
 export async function GET(request: NextRequest) {

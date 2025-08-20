@@ -279,7 +279,7 @@ export function ScreencaptureStudio() {
                 options: crawlOptions
             });
 
-            const response = await fetch('/api/auto-capture-simple', {
+            const response = await fetch('/api/auto-capture', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

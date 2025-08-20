@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { captureStore } from '@/lib/capture-store';
+import { captureStore } from '@/lib/capture-store-memory';
 import JSZip from 'jszip';
 import { createSuccessResponse, createErrorResponse, createOptionsResponse, createServerErrorResponse } from '@/lib/api-utils';
 
