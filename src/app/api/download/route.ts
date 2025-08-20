@@ -198,9 +198,16 @@ async function createSelectedZip(crawledPages: any[], selectedFiles: string | nu
           continue;
         }
         
-        zip.file(page.filename, imageBuffer);
+        // PNG 파일 유효성 검증
+        if (!isPngBuffer(imageBuffer)) {
+          console.error(`[Download API] 유효하지 않은 PNG 데이터: ${page.filename}`);
+          failedCount++;
+          continue;
+        }
+        
+        zip.file(page.filename, imageBuffer, { binary: true });
         addedCount++;
-        console.log(`[Download API] 이미지 ZIP 추가 성공: ${page.filename} (${imageBuffer.length} bytes)`);
+        console.log(`[Download API] 이미지 ZIP 추가 성공: ${page.filename} (${imageBuffer.length} bytes, PNG 유효)`);
       } catch (bufferError) {
         console.error(`[Download API] Buffer 처리 실패: ${page.filename}`, bufferError);
         failedCount++;
@@ -264,6 +271,24 @@ async function createSelectedZip(crawledPages: any[], selectedFiles: string | nu
     console.error('[Download API] 오류 스택:', (error as Error).stack);
     return null;
   }
+}
+
+function isPngBuffer(buffer: Buffer): boolean {
+  // PNG 파일 헤더 확인 (89 50 4E 47 0D 0A 1A 0A)
+  const pngSignature = Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
+  
+  if (buffer.length < 8) {
+    return false;
+  }
+  
+  // 첫 8바이트가 PNG 시그니처와 일치하는지 확인
+  for (let i = 0; i < 8; i++) {
+    if (buffer[i] !== pngSignature[i]) {
+      return false;
+    }
+  }
+  
+  return true;
 }
 
 // OPTIONS 메서드 추가 (CORS preflight 처리)
