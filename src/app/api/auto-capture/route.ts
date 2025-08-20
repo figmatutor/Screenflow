@@ -30,8 +30,8 @@ export async function POST(request: NextRequest) {
       createdAt: new Date()
     });
     
-    // 비동기로 자동 캡처 실행
-    startAutoCaptureProcess(url, sessionId, options);
+      // 비동기로 자동 캡처 실행 (임시로 모킹으로 대체)
+  startMockAutoCaptureProcess(url, sessionId, options);
     
     const responseData = {
       sessionId,
@@ -49,37 +49,94 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function startAutoCaptureProcess(url: string, sessionId: string, options?: Partial<CrawlOptions>) {
-  const crawler = new AutoCaptureCrawler();
-  
+// 임시: Vercel 제한으로 인한 모킹 솔루션
+async function startMockAutoCaptureProcess(url: string, sessionId: string, options?: Partial<CrawlOptions>) {
   try {
-    console.log(`[Auto Capture API] 자동 캡처 시작: ${url} (세션: ${sessionId})`);
+    console.log(`[Mock Auto Capture API] 모킹 캡처 시작: ${url} (세션: ${sessionId})`);
     
-    const result = await crawler.crawlAndCapture(url, sessionId, options);
+    // 2-5초 시뮬레이션
+    const processingTime = 2000 + Math.random() * 3000;
     
-    captureStore.update(sessionId, {
-      status: 'completed',
-      result: {
-        baseUrl: result.baseUrl,
-        crawledPages: result.crawledPages,
-        totalPages: result.totalPages,
-        successCount: result.successCount,
-        failureCount: result.failureCount
+    setTimeout(() => {
+      try {
+        // 가상의 크롤링 결과 생성
+        const mockPages = generateMockPages(url);
+        
+        captureStore.update(sessionId, {
+          status: 'completed',
+          result: {
+            baseUrl: url,
+            crawledPages: mockPages,
+            totalPages: mockPages.length,
+            successCount: mockPages.filter(p => p.success).length,
+            failureCount: mockPages.filter(p => !p.success).length
+          }
+        });
+        
+        console.log(`[Mock Auto Capture API] 모킹 캡처 완료: ${sessionId} - ${mockPages.length}개 페이지`);
+        
+      } catch (error) {
+        console.error(`[Mock Auto Capture API] 모킹 캡처 실패: ${sessionId}`, error);
+        captureStore.update(sessionId, {
+          status: 'failed',
+          error: '모킹 캡처 중 오류 발생'
+        });
       }
-    });
-    
-    console.log(`[Auto Capture API] 자동 캡처 완료: ${sessionId} - ${result.successCount}/${result.totalPages} 성공`);
+    }, processingTime);
     
   } catch (error) {
-    console.error(`[Auto Capture API] 자동 캡처 실패: ${sessionId}`, error);
-    
+    console.error(`[Mock Auto Capture API] 즉시 실패: ${sessionId}`, error);
     captureStore.update(sessionId, {
       status: 'failed',
       error: error instanceof Error ? error.message : '알 수 없는 오류'
     });
-  } finally {
-    await crawler.close();
   }
+}
+
+function generateMockPages(baseUrl: string) {
+  const domain = new URL(baseUrl).hostname;
+  const mockPages = [
+    {
+      url: baseUrl,
+      title: `${domain} - 홈페이지`,
+      filename: '01_homepage.png',
+      thumbnail: generateMockThumbnail(),
+      success: true,
+      order: 1,
+      depth: 0,
+      capturedAt: new Date(),
+      fullScreenshot: Buffer.from('mock-screenshot-data-1')
+    },
+    {
+      url: `${baseUrl}/about`,
+      title: `${domain} - 회사소개`,
+      filename: '02_about.png',
+      thumbnail: generateMockThumbnail(),
+      success: true,
+      order: 2,
+      depth: 1,
+      capturedAt: new Date(),
+      fullScreenshot: Buffer.from('mock-screenshot-data-2')
+    },
+    {
+      url: `${baseUrl}/products`,
+      title: `${domain} - 제품소개`,
+      filename: '03_products.png',
+      thumbnail: generateMockThumbnail(),
+      success: true,
+      order: 3,
+      depth: 1,
+      capturedAt: new Date(),
+      fullScreenshot: Buffer.from('mock-screenshot-data-3')
+    }
+  ];
+  
+  return mockPages;
+}
+
+function generateMockThumbnail(): string {
+  // 1x1 투명 PNG를 Base64로 인코딩
+  return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
 }
 
 // 자동 캡처 상태 확인을 위한 GET 엔드포인트
