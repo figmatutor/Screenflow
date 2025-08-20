@@ -190,29 +190,40 @@ export class AutoCaptureCrawler {
     const filename = `${order.toString().padStart(2, '0')}_${this.sanitizeFilename(url)}.png`;
     
     console.log(`[AutoCaptureCrawler] 캡처 시작 (${order}): ${url}`);
+    console.log(`[AutoCaptureCrawler] Depth: ${depth}, Order: ${order}`);
     
     let page: Page | null = null;
     
     try {
+      console.log(`[AutoCaptureCrawler] 새 페이지 생성 시작...`);
       page = await this.browser!.newPage();
+      console.log(`[AutoCaptureCrawler] 새 페이지 생성 완료`);
       
       // 고정 viewport 설정
+      console.log(`[AutoCaptureCrawler] viewport 설정: ${options.viewportWidth}x${options.viewportHeight}`);
       await page.setViewport({ 
         width: options.viewportWidth, 
         height: options.viewportHeight 
       });
+      console.log(`[AutoCaptureCrawler] viewport 설정 완료`);
       
       // 페이지 로드
+      console.log(`[AutoCaptureCrawler] 페이지 로드 시작: ${url}`);
       await page.goto(url, { 
         waitUntil: 'networkidle2', 
         timeout: this.timeout 
       });
+      console.log(`[AutoCaptureCrawler] 페이지 로드 완료: ${url}`);
       
       // 추가 로딩 대기
+      console.log(`[AutoCaptureCrawler] 추가 로딩 대기: ${options.waitAfterLoad}ms`);
       await new Promise(resolve => setTimeout(resolve, options.waitAfterLoad));
+      console.log(`[AutoCaptureCrawler] 추가 로딩 대기 완료`);
       
       // 페이지 제목 추출
+      console.log(`[AutoCaptureCrawler] 페이지 제목 추출 시작`);
       const pageTitle = await page.title().catch(() => 'Unknown Title');
+      console.log(`[AutoCaptureCrawler] 페이지 제목: "${pageTitle}"`);
       
       // 전체 페이지 스크린샷 캡처
       console.log(`[AutoCaptureCrawler] 스크린샷 캡처 시작 (${order}): ${url}`);
@@ -220,6 +231,7 @@ export class AutoCaptureCrawler {
         fullPage: true,
         type: 'png'
       }) as Buffer;
+      console.log(`[AutoCaptureCrawler] 스크린샷 캡처 완료: ${fullScreenshot.length} bytes`);
       
       // 스크린샷 검증
       if (!fullScreenshot || fullScreenshot.length === 0) {
