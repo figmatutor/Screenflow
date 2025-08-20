@@ -279,7 +279,7 @@ export function ScreencaptureStudio() {
                 options: crawlOptions
             });
 
-            const response = await fetch('/api/auto-capture', {
+            const response = await fetch('/api/auto-capture-simple', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -319,7 +319,7 @@ export function ScreencaptureStudio() {
     // 크롤링 상태 폴링
     const pollCrawlStatus = async (sessionId: string) => {
         try {
-            const response = await fetch(`/api/auto-capture?sessionId=${sessionId}`);
+            const response = await fetch(`/api/auto-capture-simple?sessionId=${sessionId}`);
             // 안전한 JSON 파싱
             let data;
             try {
