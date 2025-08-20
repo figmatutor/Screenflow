@@ -113,7 +113,7 @@ export class ScreenshotCapture {
         ],
         // headless: "new", // 최신 headless 모드 사용 (필요시)
         defaultViewport: null,
-        ignoreHTTPSErrors: true
+        // ignoreHTTPSErrors: true
       });
       
       console.log(`[ScreenshotCapture] 브라우저 초기화 완료`);

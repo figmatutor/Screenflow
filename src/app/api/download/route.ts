@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
           return NextResponse.json({ error: 'Failed to create ZIP file' }, { status: 500 });
         }
         
-        const response = new NextResponse(zipBuffer);
+        const response = new NextResponse(zipBuffer as unknown as BodyInit);
         response.headers.set('Content-Type', 'application/zip');
         response.headers.set('Content-Disposition', `attachment; filename="auto_capture_${sessionId}.zip"`);
         response.headers.set('Content-Length', zipBuffer.length.toString());
@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'No data available' }, { status: 404 });
       }
       
-      const response = new NextResponse(zipBuffer);
+      const response = new NextResponse(zipBuffer as unknown as BodyInit);
       response.headers.set('Content-Type', 'application/zip');
       
       // 세션 ID로 파일명 결정
@@ -260,7 +260,7 @@ async function createSelectedZip(crawledPages: any[], selectedFiles: string | nu
     
   } catch (error) {
     console.error('[Download API] ZIP 생성 중 오류 발생:', error);
-    console.error('[Download API] 오류 스택:', error.stack);
+    console.error('[Download API] 오류 스택:', (error as Error).stack);
     return null;
   }
 }

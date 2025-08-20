@@ -49,7 +49,7 @@ export class LinkDiscovery {
           '--disable-renderer-backgrounding'
         ],
         defaultViewport: null,
-        ignoreHTTPSErrors: true
+        // ignoreHTTPSErrors: true
       });
       
       console.log(`[LinkDiscovery] 브라우저 초기화 완료`);

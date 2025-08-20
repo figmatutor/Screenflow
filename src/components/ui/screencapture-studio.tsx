@@ -670,17 +670,38 @@ export function ScreencaptureStudio() {
                                 </div>
                                 
                                 <div className="space-y-6">
+                                    {/* 크롤링 시작 시 0% 표시 */}
+                                    <div className="text-center">
+                                        <motion.div 
+                                            className="text-6xl font-black text-white mb-2 tabular-nums"
+                                            style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif' }}
+                                            initial={{ scale: 0.8, opacity: 0 }}
+                                            animate={{ scale: 1, opacity: 1 }}
+                                            key={crawlProgress.totalPages > 0 ? Math.round((crawlProgress.currentPage / crawlProgress.totalPages) * 100) : 0}
+                                            transition={{ duration: 0.3, ease: "easeOut" }}
+                                        >
+                                            {crawlProgress.totalPages > 0 
+                                                ? Math.round((crawlProgress.currentPage / crawlProgress.totalPages) * 100) 
+                                                : 0}%
+                                        </motion.div>
+                                        <div className="text-base text-white/70" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif' }}>
+                                            {crawlProgress.totalPages > 0 
+                                                ? `${crawlProgress.currentPage}/${crawlProgress.totalPages} 페이지 완료`
+                                                : '크롤링 준비 중...'}
+                                        </div>
+                                    </div>
+                                    
                                     {/* 진행률 표시는 이제 Progress 컴포넌트 내부에서 처리 */}
                                     
                                     {crawlProgress.totalPages > 0 && (
-                                        <div className="w-full space-y-2">
+                                        <div className="w-full space-y-4">
                                             {/* 진행률 텍스트 */}
                                             <div className="flex w-full justify-between mb-2">
-                                                <span className="text-sm font-bold text-white leading-7" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif' }}>
-                                                    {crawlProgress.currentPage}/{crawlProgress.totalPages || '...'} 페이지 완료
+                                                <span className="text-sm font-medium text-white/60 leading-7" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif' }}>
+                                                    진행 상황
                                                 </span>
                                                 <span className="text-sm font-bold text-white leading-7" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif' }}>
-                                                    {Math.round((crawlProgress.currentPage / crawlProgress.totalPages) * 100)}%
+                                                    {crawlProgress.currentPage}/{crawlProgress.totalPages || '...'} 완료
                                                 </span>
                                             </div>
                                             
