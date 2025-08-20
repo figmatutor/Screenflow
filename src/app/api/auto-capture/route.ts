@@ -30,8 +30,8 @@ export async function POST(request: NextRequest) {
       createdAt: new Date()
     });
     
-      // 비동기로 자동 캡처 실행 (임시로 모킹으로 대체)
-  startMockAutoCaptureProcess(url, sessionId, options);
+      // 비동기로 자동 캡처 실행 (실제 Puppeteer 크롤링)
+  startAutoCaptureProcess(url, sessionId, options);
     
     const responseData = {
       sessionId,
@@ -218,6 +218,44 @@ export async function GET(request: NextRequest) {
   });
   
   return createSuccessResponse(response);
+}
+
+// 실제 Puppeteer 기반 자동 캡처 프로세스
+async function startAutoCaptureProcess(url: string, sessionId: string, options?: Partial<CrawlOptions>) {
+  let crawler: AutoCaptureCrawler | null = null;
+  try {
+    console.log(`[Real Auto Capture API] 실제 Puppeteer 캡처 시작: ${url} (세션: ${sessionId})`);
+    
+    crawler = new AutoCaptureCrawler();
+    const result = await crawler.crawlAndCapture(url, sessionId, options);
+    
+    console.log(`[Real Auto Capture API] 실제 캡처 완료: ${sessionId} - ${result.successCount}/${result.totalPages} 성공`);
+
+    const captureInfo = {
+      status: 'completed' as const,
+      result,
+      createdAt: new Date(),
+      finishedAt: new Date()
+    };
+
+    captureStore.set(sessionId, captureInfo);
+
+  } catch (error) {
+    console.error(`[Real Auto Capture API] 실제 캡처 실패: ${sessionId}`, error);
+    
+    const captureInfo = {
+      status: 'failed' as const,
+      error: error instanceof Error ? error.message : '알 수 없는 오류',
+      createdAt: new Date(),
+      finishedAt: new Date()
+    };
+
+    captureStore.set(sessionId, captureInfo);
+  } finally {
+    if (crawler) {
+      await crawler.close();
+    }
+  }
 }
 
 export async function OPTIONS() {
