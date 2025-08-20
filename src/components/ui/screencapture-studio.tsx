@@ -319,7 +319,8 @@ export function ScreencaptureStudio() {
     // 크롤링 상태 폴링
     const pollCrawlStatus = async (sessionId: string) => {
         try {
-            const response = await fetch(`/api/auto-capture-simple?sessionId=${sessionId}`);
+            console.log(`[Frontend] 폴링 요청: /api/auto-capture?sessionId=${sessionId}&v=2`);
+            const response = await fetch(`/api/auto-capture?sessionId=${sessionId}&v=2`);
             // 안전한 JSON 파싱
             let data;
             try {
