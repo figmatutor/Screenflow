@@ -10,16 +10,40 @@ export class BrowserLauncher {
     
     try {
       // Vercel/serverless 환경 감지
-      const isVercel = process.env.VERCEL === '1' || process.env.AWS_LAMBDA_FUNCTION_NAME;
+      const isVercel = process.env.VERCEL === '1' || 
+                      process.env.AWS_LAMBDA_FUNCTION_NAME ||
+                      process.env.NODE_ENV === 'production';
+      
+      console.log(`[BrowserLauncher] 환경 변수 체크:`, {
+        VERCEL: process.env.VERCEL,
+        NODE_ENV: process.env.NODE_ENV,
+        AWS_LAMBDA: process.env.AWS_LAMBDA_FUNCTION_NAME,
+        isVercel
+      });
       
       if (isVercel) {
         // Vercel 환경에서는 @sparticuz/chromium 사용
         console.log(`[BrowserLauncher] Serverless 환경 감지 - @sparticuz/chromium 사용`);
         
+        // chromium 실행 파일 경로 확보
+        const executablePath = await chromium.executablePath();
+        console.log(`[BrowserLauncher] Executable path: ${executablePath}`);
+        
         return await puppeteer.launch({
-          args: [...chromium.args, '--hide-scrollbars', '--disable-web-security'],
+          args: [
+            ...chromium.args,
+            '--hide-scrollbars',
+            '--disable-web-security',
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-accelerated-2d-canvas',
+            '--no-first-run',
+            '--no-zygote',
+            '--disable-gpu'
+          ],
           defaultViewport: { width: 1280, height: 720 },
-          executablePath: await chromium.executablePath(),
+          executablePath,
           headless: true,
         });
       } else {
