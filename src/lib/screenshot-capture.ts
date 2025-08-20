@@ -1,3 +1,4 @@
+import { CrawledPage } from "./auto-capture-crawler";
 import puppeteer, { Browser, Page } from 'puppeteer';
 import JSZip from 'jszip';
 
@@ -181,7 +182,7 @@ export class ScreenshotCapture {
     }
   }
 
-  private async capturePage(url: string, pageNumber: number): Promise<CapturedPage> {
+  private async capturePage(url: string, pageNumber: number): Promise<any> {
     const filename = `${pageNumber.toString().padStart(2, '0')}_${this.sanitizeFilename(url)}.png`;
     
     console.log(`[ScreenshotCapture] 캡처 시작: ${url} -> ${filename}`);
