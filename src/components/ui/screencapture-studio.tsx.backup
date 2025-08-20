@@ -288,20 +288,8 @@ export function ScreencaptureStudio() {
                 })
             });
 
-            // 안전한 JSON 파싱
-            let data;
-            try {
-                const text = await response.text();
-                console.log("[Frontend] 서버 응답:", text);
-                data = text ? JSON.parse(text) : {};
-            } catch (parseError) {
-                console.error("[Frontend] JSON 파싱 에러:", parseError);
-                throw new Error("서버 응답 형식이 올바르지 않습니다.");
-            }
+            const data = await response.json();
 
-            if (!response.ok) {
-                throw new Error(data.error || `서버 에러: ${response.status}`);
-            }
             if (data.sessionId) {
                 setSessionId(data.sessionId);
                 pollCrawlStatus(data.sessionId);
@@ -320,20 +308,8 @@ export function ScreencaptureStudio() {
     const pollCrawlStatus = async (sessionId: string) => {
         try {
             const response = await fetch(`/api/auto-capture?sessionId=${sessionId}`);
-            // 안전한 JSON 파싱
-            let data;
-            try {
-                const text = await response.text();
-                console.log("[Frontend] 서버 응답:", text);
-                data = text ? JSON.parse(text) : {};
-            } catch (parseError) {
-                console.error("[Frontend] JSON 파싱 에러:", parseError);
-                throw new Error("서버 응답 형식이 올바르지 않습니다.");
-            }
+            const data = await response.json();
 
-            if (!response.ok) {
-                throw new Error(data.error || `서버 에러: ${response.status}`);
-            }
             console.log('[Frontend] 크롤링 상태:', data);
 
             if (data.status === 'completed' && data.crawledPages) {
@@ -492,7 +468,7 @@ export function ScreencaptureStudio() {
                 style={{ height: '69px' }}
             >
                 <div className="flex items-center justify-between px-6 h-full max-w-[1280px] mx-auto">
-                                                    <h1 className="text-[19.375px] font-bold text-white leading-7" style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif' }}>ScreenFlow</h1>
+                                                    <h1 className="text-[19.375px] font-bold text-white leading-7" style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif' }}>Screencapture Studio</h1>
                     <div className="flex items-center gap-4">
                         <span className="text-sm text-white/60 font-normal">가입하기</span>
                         <button className="px-4 py-2 bg-white text-black rounded-lg text-sm font-medium hover:bg-white/90 transition-colors">
