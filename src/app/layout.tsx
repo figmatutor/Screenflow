@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Screencapture Studio',
+  title: 'Screenflow',
   description: '레퍼런스 수집, 이제 링크 한 줄로 끝. 웹페이지를 자동으로 크롤링하고 스크린샷을 캡처하여 레퍼런스를 쉽게 수집하세요.',
 };
 
