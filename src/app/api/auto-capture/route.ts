@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { NextRequest as NextReq } from 'next/server';
 import { AutoCaptureCrawler, CrawlOptions } from '@/lib/auto-capture-crawler';
-import { captureStore } from '@/lib/capture-store-hybrid';
+import { captureStore } from '@/lib/capture-store-supabase-primary';
 import { createSuccessResponse, createErrorResponse, createOptionsResponse, createServerErrorResponse } from '@/lib/api-utils';
 
 export async function POST(request: NextRequest) {
