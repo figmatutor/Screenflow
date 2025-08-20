@@ -1,34 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AutoCaptureCrawler, CrawlOptions } from '@/lib/auto-capture-crawler';
 import { captureStore } from '@/lib/capture-store';
+import { createSuccessResponse, createErrorResponse, createOptionsResponse, createServerErrorResponse } from '@/lib/api-utils';
 
 export async function POST(request: NextRequest) {
   try {
     const { url, options } = await request.json();
     
     if (!url) {
-      return NextResponse.json({ error: 'URL is required' }, { 
-        status: 400,
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type",
-        }
-      });
+      return createErrorResponse('URL is required');
     }
 
     // URL 유효성 검사
     try {
       new URL(url);
     } catch {
-      return NextResponse.json({ error: 'Invalid URL format' }, { 
-        status: 400,
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type",
-        }
-      });
+      return createErrorResponse('Invalid URL format');
     }
 
     // 세션 ID 생성
@@ -53,14 +40,11 @@ export async function POST(request: NextRequest) {
       message: '페이지를 크롤링하고 스크린샷을 자동 캡처하고 있습니다...'
     };
 
-    return NextResponse.json(responseData);
+    return createSuccessResponse(responseData);
     
   } catch (error) {
     console.error('[Auto Capture API] error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' }, 
-      { status: 500 }
-    );
+    return createServerErrorResponse();
   }
 }
 
@@ -105,28 +89,14 @@ export async function GET(request: NextRequest) {
   console.log(`[Auto Capture GET] Request for sessionId: ${sessionId}`);
   
   if (!sessionId) {
-    return NextResponse.json({ error: 'Session ID is required' }, { 
-      status: 400,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type",
-      }
-    });
+    return createErrorResponse('Session ID is required');
   }
   
   const captureInfo = captureStore.get(sessionId);
   
   if (!captureInfo) {
     console.log(`[Auto Capture GET] Session not found: ${sessionId}`);
-    return NextResponse.json({ error: 'Session not found' }, { 
-      status: 404,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type",
-      }
-    });
+    return createErrorResponse('Session not found', 404);
   }
   
   console.log(`[Auto Capture GET] Session found:`, { 
@@ -165,16 +135,9 @@ export async function GET(request: NextRequest) {
     crawledPages: response.crawledPages ? `${response.crawledPages.length} pages` : undefined
   });
   
-  return NextResponse.json(response);
+  return createSuccessResponse(response);
 }
 
-export async function OPTIONS(request: NextRequest) {
-  return new NextResponse(null, {
-    status: 200,
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
-    },
-  });
+export async function OPTIONS() {
+  return createOptionsResponse();
 }
