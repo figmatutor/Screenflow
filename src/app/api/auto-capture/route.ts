@@ -22,7 +22,8 @@ export async function POST(request: NextRequest) {
     // 세션 ID 생성
     const sessionId = `autocapture_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
     
-    console.log(`[Auto Capture API] 자동 캡처 시작: ${url} (세션: ${sessionId})`);
+    console.log(`[Auto Capture API v3.0] 실제 Puppeteer 크롤링 모드: ${url} (세션: ${sessionId})`);
+    console.log(`[Auto Capture API v3.0] Mock 모드 비활성화됨 - 실제 크롤링 시작`);
     
     // 백그라운드에서 자동 캡처 작업 시작
         captureStore.set(sessionId, {
@@ -30,8 +31,8 @@ export async function POST(request: NextRequest) {
       createdAt: new Date()
     });
     
-      // 비동기로 자동 캡처 실행 (실제 Puppeteer 크롤링)
-  startAutoCaptureProcess(url, sessionId, options);
+      // 비동기로 자동 캡처 실행 (실제 Puppeteer 크롤링 v3.0)
+  startRealPuppeteerCrawling(url, sessionId, options);
     
     const responseData = {
       sessionId,
@@ -220,11 +221,12 @@ export async function GET(request: NextRequest) {
   return createSuccessResponse(response);
 }
 
-// 실제 Puppeteer 기반 자동 캡처 프로세스
-async function startAutoCaptureProcess(url: string, sessionId: string, options?: Partial<CrawlOptions>) {
+// 실제 Puppeteer 기반 자동 캡처 프로세스 v3.0
+async function startRealPuppeteerCrawling(url: string, sessionId: string, options?: Partial<CrawlOptions>) {
   let crawler: AutoCaptureCrawler | null = null;
   try {
-    console.log(`[Real Auto Capture API] 실제 Puppeteer 캡처 시작: ${url} (세션: ${sessionId})`);
+    console.log(`[Real Auto Capture API v3.0] 실제 Puppeteer 캡처 시작: ${url} (세션: ${sessionId})`);
+    console.log(`[Real Auto Capture API v3.0] MOCK 모드 완전 비활성화 - 실제 브라우저 초기화`);
     
     crawler = new AutoCaptureCrawler();
     const result = await crawler.crawlAndCapture(url, sessionId, options);
