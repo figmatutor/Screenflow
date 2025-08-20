@@ -40,11 +40,18 @@ export class BrowserLauncher {
             '--disable-accelerated-2d-canvas',
             '--no-first-run',
             '--no-zygote',
-            '--disable-gpu'
+            '--disable-gpu',
+            '--memory-pressure-off',
+            '--max_old_space_size=512',
+            '--disable-background-timer-throttling',
+            '--disable-renderer-backgrounding',
+            '--disable-backgrounding-occluded-windows',
+            '--disable-features=TranslateUI',
+            '--disable-ipc-flooding-protection'
           ],
-          defaultViewport: { width: 1280, height: 720 },
+          defaultViewport: { width: 800, height: 600 }, // 더 작은 viewport
           executablePath,
-          headless: true,
+          headless: true, // headless 모드
         });
       } else {
         // 로컬 환경에서는 시스템 Chrome 사용

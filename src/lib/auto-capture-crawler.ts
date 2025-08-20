@@ -39,12 +39,12 @@ export class AutoCaptureCrawler {
   private readonly timeout = 30000;
   private readonly defaultOptions: CrawlOptions = {
     maxDepth: 1,
-    maxPages: 20,
-    viewportWidth: 1440,
-    viewportHeight: 900,
-    thumbnailWidth: 320,
-    thumbnailHeight: 240,
-    waitAfterLoad: 2000
+    maxPages: 5, // 페이지 수 제한
+    viewportWidth: 800, // 더 작은 뷰포트
+    viewportHeight: 600,
+    thumbnailWidth: 200, // 더 작은 썸네일
+    thumbnailHeight: 150,
+    waitAfterLoad: 1000 // 더 짧은 대기시간
   };
 
   async initialize(): Promise<void> {
@@ -225,11 +225,13 @@ export class AutoCaptureCrawler {
       const pageTitle = await page.title().catch(() => 'Unknown Title');
       console.log(`[AutoCaptureCrawler] 페이지 제목: "${pageTitle}"`);
       
-      // 전체 페이지 스크린샷 캡처
+      // 전체 페이지 스크린샷 캡처 (최적화됨)
       console.log(`[AutoCaptureCrawler] 스크린샷 캡처 시작 (${order}): ${url}`);
       const fullScreenshot = await page.screenshot({
-        fullPage: true,
-        type: 'png'
+        fullPage: false, // viewport만 캡처 (더 빠름)
+        type: 'png',
+        quality: 70, // 품질 조정
+        clip: { x: 0, y: 0, width: 800, height: 600 } // 고정 크기
       }) as Buffer;
       console.log(`[AutoCaptureCrawler] 스크린샷 캡처 완료: ${fullScreenshot.length} bytes`);
       
