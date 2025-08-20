@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SelectiveCapture, CaptureRequest } from '@/lib/selective-capture';
 import { captureStore } from '@/lib/capture-store';
+import { createSuccessResponse, createErrorResponse, createOptionsResponse, createServerErrorResponse } from '@/lib/api-utils';
 
 export async function POST(request: NextRequest) {
   try {
     const { baseUrl, selectedUrls, sessionId: originalSessionId } = await request.json();
     
     if (!baseUrl || !selectedUrls || !Array.isArray(selectedUrls) || selectedUrls.length === 0) {
-      return NextResponse.json({ 
-        error: 'baseUrl and selectedUrls array are required' 
-      }, { status: 400 });
+      return createErrorResponse('baseUrl and selectedUrls array are required');
     }
 
     // URL 유효성 검사
@@ -17,7 +16,7 @@ export async function POST(request: NextRequest) {
       new URL(baseUrl);
       selectedUrls.forEach(url => new URL(url));
     } catch {
-      return NextResponse.json({ error: 'Invalid URL format' }, { status: 400 });
+      return createErrorResponse('Invalid URL format');
     }
 
     // 세션 ID 생성
@@ -54,14 +53,11 @@ export async function POST(request: NextRequest) {
       message: '선택된 페이지들을 순차적으로 캡처하고 있습니다...'
     };
 
-    return NextResponse.json(responseData);
+    return createSuccessResponse(responseData);
     
   } catch (error) {
     console.error('[Selective Capture API] error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' }, 
-      { status: 500 }
-    );
+    return createServerErrorResponse();
   }
 }
 
@@ -119,14 +115,14 @@ export async function GET(request: NextRequest) {
   console.log(`[Selective Capture GET] Request for sessionId: ${sessionId}`);
   
   if (!sessionId) {
-    return NextResponse.json({ error: 'Session ID is required' }, { status: 400 });
+    return createErrorResponse('Session ID is required');
   }
   
   const captureInfo = captureStore.get(sessionId);
   
   if (!captureInfo) {
     console.log(`[Selective Capture GET] Session not found: ${sessionId}`);
-    return NextResponse.json({ error: 'Session not found' }, { status: 404 });
+    return createErrorResponse('Session not found', 404);
   }
   
   console.log(`[Selective Capture GET] Session found:`, { 
@@ -154,5 +150,10 @@ export async function GET(request: NextRequest) {
   
   console.log(`[Selective Capture GET] Response:`, response);
   
-  return NextResponse.json(response);
+  return createSuccessResponse(response);
+}
+
+// OPTIONS 메서드 추가 (CORS preflight 처리)
+export async function OPTIONS() {
+  return createOptionsResponse();
 }

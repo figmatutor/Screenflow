@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { captureStore } from '@/lib/capture-store';
+import { createOptionsResponse } from '@/lib/api-utils';
 
 export async function GET(request: NextRequest) {
   try {
@@ -30,4 +31,9 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+// OPTIONS 메서드 추가 (CORS preflight 처리)
+export async function OPTIONS() {
+  return createOptionsResponse();
 }

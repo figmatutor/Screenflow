@@ -1,20 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { LinkDiscovery } from '@/lib/link-discovery';
 import { captureStore } from '@/lib/capture-store';
+import { createSuccessResponse, createErrorResponse, createOptionsResponse, createServerErrorResponse } from '@/lib/api-utils';
 
 export async function POST(request: NextRequest) {
   try {
     const { url } = await request.json();
     
     if (!url) {
-      return NextResponse.json({ error: 'URL is required' }, { status: 400 });
+      return createErrorResponse('URL is required');
     }
 
     // URL 유효성 검사
     try {
       new URL(url);
     } catch {
-      return NextResponse.json({ error: 'Invalid URL format' }, { status: 400 });
+      return createErrorResponse('Invalid URL format');
     }
 
     // 세션 ID 생성
@@ -39,14 +40,11 @@ export async function POST(request: NextRequest) {
       message: '페이지를 분석하고 링크를 수집하고 있습니다...'
     };
 
-    return NextResponse.json(responseData);
+    return createSuccessResponse(responseData);
     
   } catch (error) {
     console.error('[Discover API] error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' }, 
-      { status: 500 }
-    );
+    return createServerErrorResponse();
   }
 }
 
@@ -90,16 +88,16 @@ export async function GET(request: NextRequest) {
   const sessionId = searchParams.get('sessionId');
   
   if (!sessionId) {
-    return NextResponse.json({ error: 'Session ID is required' }, { status: 400 });
+    return createErrorResponse('Session ID is required');
   }
   
   const captureInfo = captureStore.get(sessionId);
   
   if (!captureInfo) {
-    return NextResponse.json({ error: 'Session not found' }, { status: 404 });
+    return createErrorResponse('Session not found', 404);
   }
   
-  return NextResponse.json({
+  const responseData = {
     sessionId,
     status: captureInfo.status,
     ...(captureInfo.result && { 
@@ -110,5 +108,12 @@ export async function GET(request: NextRequest) {
       internalLinks: captureInfo.result.internalLinks
     }),
     ...(captureInfo.error && { error: captureInfo.error })
-  });
+  };
+  
+  return createSuccessResponse(responseData);
+}
+
+// OPTIONS 메서드 추가 (CORS preflight 처리)
+export async function OPTIONS() {
+  return createOptionsResponse();
 }

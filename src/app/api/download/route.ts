@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { captureStore } from '@/lib/capture-store';
 import JSZip from 'jszip';
+import { createOptionsResponse } from '@/lib/api-utils';
 
 // HEAD 요청 처리 (파일 크기 확인용)
 export async function HEAD(request: NextRequest) {
@@ -263,4 +264,9 @@ async function createSelectedZip(crawledPages: any[], selectedFiles: string | nu
     console.error('[Download API] 오류 스택:', (error as Error).stack);
     return null;
   }
+}
+
+// OPTIONS 메서드 추가 (CORS preflight 처리)
+export async function OPTIONS() {
+  return createOptionsResponse();
 }

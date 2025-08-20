@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { captureStore } from '@/lib/capture-store';
 import JSZip from 'jszip';
+import { createSuccessResponse, createErrorResponse, createOptionsResponse, createServerErrorResponse } from '@/lib/api-utils';
 
 // 테스트용 목업 캡처 생성
 export async function POST(request: NextRequest) {
@@ -8,7 +9,7 @@ export async function POST(request: NextRequest) {
     const { url } = await request.json();
     
     if (!url) {
-      return NextResponse.json({ error: 'URL is required' }, { status: 400 });
+      return createErrorResponse('URL is required');
     }
 
     // 테스트용 세션 ID 생성
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
     
     console.log(`[Test Capture] Test session created and completed: ${sessionId}`);
     
-    return NextResponse.json({
+    return createSuccessResponse({
       sessionId,
       baseUrl: url,
       status: 'completed',
@@ -54,10 +55,7 @@ export async function POST(request: NextRequest) {
     
   } catch (error) {
     console.error('Test Capture API error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' }, 
-      { status: 500 }
-    );
+    return createServerErrorResponse();
   }
 }
 
@@ -112,4 +110,9 @@ async function createMockZip(sessionId: string, url: string): Promise<Buffer> {
   zip.file('failures.txt', 'URL: ' + url + '/contact\nError: Page not found\n---');
   
   return await zip.generateAsync({ type: 'nodebuffer' });
+}
+
+// OPTIONS 메서드 추가 (CORS preflight 처리)
+export async function OPTIONS() {
+  return createOptionsResponse();
 }
