@@ -230,7 +230,7 @@ export class AutoCaptureCrawler {
       const fullScreenshot = await page.screenshot({
         fullPage: false, // viewport만 캡처 (더 빠름)
         type: 'png',
-        quality: 70, // 품질 조정
+        // PNG는 무손실 압축이므로 quality 옵션 제거
         clip: { x: 0, y: 0, width: 800, height: 600 } // 고정 크기
       }) as Buffer;
       console.log(`[AutoCaptureCrawler] 스크린샷 캡처 완료: ${fullScreenshot.length} bytes`);
