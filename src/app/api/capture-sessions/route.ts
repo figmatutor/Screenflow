@@ -4,6 +4,13 @@ import { supabaseAdmin, CaptureSession } from '@/lib/supabase'
 // GET: 캡처 세션 목록 조회
 export async function GET(request: NextRequest) {
   try {
+    if (!supabaseAdmin) {
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 500 }
+      )
+    }
+
     const { searchParams } = new URL(request.url)
     const limit = parseInt(searchParams.get('limit') || '20')
     const offset = parseInt(searchParams.get('offset') || '0')
@@ -55,6 +62,13 @@ export async function GET(request: NextRequest) {
 // POST: 새 캡처 세션 생성
 export async function POST(request: NextRequest) {
   try {
+    if (!supabaseAdmin) {
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 500 }
+      )
+    }
+
     const body = await request.json()
     const { session_id, url, user_id, status = 'processing' } = body as Partial<CaptureSession>
 

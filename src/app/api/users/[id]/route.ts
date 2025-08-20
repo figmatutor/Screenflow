@@ -4,10 +4,17 @@ import { supabaseAdmin, User } from '@/lib/supabase'
 // GET: 특정 사용자 조회
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    if (!supabaseAdmin) {
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 500 }
+      )
+    }
+
+    const { id } = await params
 
     const { data: user, error } = await supabaseAdmin
       .from('users')
@@ -44,10 +51,17 @@ export async function GET(
 // PUT: 사용자 정보 수정
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    if (!supabaseAdmin) {
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 500 }
+      )
+    }
+
+    const { id } = await params
     const body = await request.json()
     const { email, name } = body as Pick<User, 'email' | 'name'>
 
@@ -124,10 +138,17 @@ export async function PUT(
 // DELETE: 사용자 삭제
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    if (!supabaseAdmin) {
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 500 }
+      )
+    }
+
+    const { id } = await params
 
     const { error } = await supabaseAdmin
       .from('users')

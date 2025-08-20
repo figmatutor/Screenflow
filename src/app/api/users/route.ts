@@ -4,6 +4,13 @@ import { supabase, supabaseAdmin, User } from '@/lib/supabase'
 // GET: 모든 사용자 조회
 export async function GET(request: NextRequest) {
   try {
+    if (!supabaseAdmin) {
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 500 }
+      )
+    }
+
     const { searchParams } = new URL(request.url)
     const limit = parseInt(searchParams.get('limit') || '10')
     const offset = parseInt(searchParams.get('offset') || '0')
@@ -43,6 +50,13 @@ export async function GET(request: NextRequest) {
 // POST: 새 사용자 생성
 export async function POST(request: NextRequest) {
   try {
+    if (!supabaseAdmin) {
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 500 }
+      )
+    }
+
     const body = await request.json()
     const { email, name } = body as Pick<User, 'email' | 'name'>
 
