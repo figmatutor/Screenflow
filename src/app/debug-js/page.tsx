@@ -86,6 +86,29 @@ export default function DebugPage() {
     }
   };
 
+  const testSyncCapture = async () => {
+    addLog('동기식 캡처 테스트 시작');
+    try {
+      const response = await fetch('/api/auto-capture-sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: 'https://naver.com', options: {} })
+      });
+      addLog(`동기식 캡처 status: ${response.status}`);
+      const data = await response.json();
+      addLog(`동기식 캡처 response: ${JSON.stringify(data)}`);
+      
+      if (response.status === 200 && data.status === 'completed') {
+        setResult(`✅ 동기식 캡처 성공: ${data.successCount}/${data.totalPages} 페이지`);
+      } else {
+        setResult('❌ 동기식 캡처 실패');
+      }
+    } catch (error) {
+      addLog(`❌ 동기식 캡처 오류: ${error}`);
+      setResult('❌ 동기식 캡처 오류');
+    }
+  };
+
   return (
     <div style={{ padding: '20px', fontFamily: 'monospace' }}>
       <h1>🔧 JavaScript 디버깅 페이지</h1>
@@ -102,6 +125,9 @@ export default function DebugPage() {
         </button>
         <button onClick={testPuppeteer} style={{ marginLeft: '10px', padding: '10px' }}>
           Puppeteer 단독 테스트
+        </button>
+        <button onClick={testSyncCapture} style={{ marginLeft: '10px', padding: '10px' }}>
+          동기식 캡처 테스트
         </button>
       </div>
 
