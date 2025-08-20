@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { captureStore } from '@/lib/capture-store';
+import { captureStore } from '@/lib/capture-store-memory';
 import { createSuccessResponse, createErrorResponse, createOptionsResponse, createServerErrorResponse } from '@/lib/api-utils';
 
 // Puppeteer 없이 간단한 모킹 버전
