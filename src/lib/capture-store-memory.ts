@@ -18,6 +18,8 @@ class MemoryCaptureStore {
   get(sessionId: string): CaptureSession | null {
     const session = this.sessions.get(sessionId);
     console.log(`[MemoryCaptureStore] Getting session ${sessionId}:`, session?.status || 'not found');
+    console.log(`[MemoryCaptureStore] Total sessions in memory:`, this.sessions.size);
+    console.log(`[MemoryCaptureStore] All session IDs:`, Array.from(this.sessions.keys()));
     return session || null;
   }
 

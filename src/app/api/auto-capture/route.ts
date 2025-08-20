@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { NextRequest as NextReq } from 'next/server';
 import { AutoCaptureCrawler, CrawlOptions } from '@/lib/auto-capture-crawler';
-import { captureStore } from '@/lib/capture-store-memory';
+import { captureStore } from '@/lib/capture-store-hybrid';
 import { createSuccessResponse, createErrorResponse, createOptionsResponse, createServerErrorResponse } from '@/lib/api-utils';
 
 export async function POST(request: NextRequest) {
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     console.log(`[Auto Capture API] 자동 캡처 시작: ${url} (세션: ${sessionId})`);
     
     // 백그라운드에서 자동 캡처 작업 시작
-    captureStore.set(sessionId, { 
+    await captureStore.set(sessionId, { 
       status: 'processing',
       createdAt: new Date()
     });
@@ -57,7 +57,7 @@ async function startAutoCaptureProcess(url: string, sessionId: string, options?:
     
     const result = await crawler.crawlAndCapture(url, sessionId, options);
     
-    captureStore.update(sessionId, {
+    await captureStore.update(sessionId, {
       status: 'completed',
       result: {
         baseUrl: result.baseUrl,
@@ -73,7 +73,7 @@ async function startAutoCaptureProcess(url: string, sessionId: string, options?:
   } catch (error) {
     console.error(`[Auto Capture API] 자동 캡처 실패: ${sessionId}`, error);
     
-    captureStore.update(sessionId, {
+    await captureStore.update(sessionId, {
       status: 'failed',
       error: error instanceof Error ? error.message : '알 수 없는 오류'
     });
@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
     return createErrorResponse('Session ID is required');
   }
   
-  const captureInfo = captureStore.get(sessionId);
+  const captureInfo = await captureStore.get(sessionId);
   
   if (!captureInfo) {
     console.log(`[Auto Capture GET] Session not found: ${sessionId}`);
