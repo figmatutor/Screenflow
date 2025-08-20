@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 이 프로젝트는 [`EasyNext`](https://github.com/easynext/easynext)를 사용해 생성된 [Next.js](https://nextjs.org) 프로젝트입니다.
 
 ## Getting Started
@@ -90,3 +91,6 @@ easynext sentry
 # Google Adsense
 easynext adsense
 ```
+=======
+# Screenflow
+>>>>>>> 3b67e6c5a1c68373fe958653a3b1a699fb05c57d
