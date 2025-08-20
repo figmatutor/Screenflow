@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest as NextReq } from 'next/server';
 import { AutoCaptureCrawler, CrawlOptions } from '@/lib/auto-capture-crawler';
 import { captureStore } from '@/lib/capture-store';
 import { createSuccessResponse, createErrorResponse, createOptionsResponse, createServerErrorResponse } from '@/lib/api-utils';
@@ -19,7 +20,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 세션 ID 생성
-    const sessionId = `autocapture_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const sessionId = `autocapture_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
     
     console.log(`[Auto Capture API] 자동 캡처 시작: ${url} (세션: ${sessionId})`);
     

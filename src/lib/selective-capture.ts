@@ -1,4 +1,5 @@
-import puppeteer, { Browser, Page } from 'puppeteer';
+import { Browser, Page } from 'puppeteer-core';
+import { BrowserLauncher } from './browser-launcher';
 import JSZip from 'jszip';
 import { DiscoveredLink } from './link-discovery';
 
@@ -37,28 +38,8 @@ export class SelectiveCapture {
     console.log(`[SelectiveCapture] 브라우저 초기화 시작`);
     
     try {
-      this.browser = await puppeteer.launch({
-        headless: true,
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-accelerated-2d-canvas',
-          '--no-first-run',
-          '--no-zygote',
-          '--disable-gpu',
-          '--disable-extensions',
-          '--disable-default-apps',
-          '--disable-background-timer-throttling',
-          '--disable-backgrounding-occluded-windows',
-          '--disable-renderer-backgrounding'
-        ],
-        defaultViewport: null,
-        // ignoreHTTPSErrors: true
-      });
-      
+      this.browser = await BrowserLauncher.launch();
       console.log(`[SelectiveCapture] 브라우저 초기화 완료`);
-      
     } catch (error) {
       console.error(`[SelectiveCapture] 브라우저 초기화 실패:`, error);
       throw error;

@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 세션 ID 생성
-    const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
     
     // 백그라운드에서 캡처 작업 시작
     captureStore.set(sessionId, { 

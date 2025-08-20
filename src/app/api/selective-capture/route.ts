@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 세션 ID 생성
-    const sessionId = `capture_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const sessionId = `capture_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
     
     console.log(`[Selective Capture API] 선택적 캡처 시작: ${selectedUrls.length}개 URL (세션: ${sessionId})`);
     

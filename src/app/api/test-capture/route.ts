@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 테스트용 세션 ID 생성
-    const sessionId = `test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const sessionId = `test_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
     
     console.log(`[Test Capture] Creating test session: ${sessionId} for URL: ${url}`);
     

@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 세션 ID 생성
-    const sessionId = `discover_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const sessionId = `discover_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
     
     console.log(`[Discover API] 링크 발견 시작: ${url} (세션: ${sessionId})`);
     

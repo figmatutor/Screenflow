@@ -1,5 +1,6 @@
 import { CrawledPage } from "./auto-capture-crawler";
-import puppeteer, { Browser, Page } from 'puppeteer';
+import { Browser, Page } from 'puppeteer-core';
+import { BrowserLauncher } from './browser-launcher';
 import JSZip from 'jszip';
 
 export interface CaptureResult {
@@ -96,29 +97,8 @@ export class ScreenshotCapture {
     console.log(`[ScreenshotCapture] 브라우저 초기화 시작`);
     
     try {
-      this.browser = await puppeteer.launch({
-        headless: true,
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-accelerated-2d-canvas',
-          '--no-first-run',
-          '--no-zygote',
-          '--disable-gpu',
-          '--disable-extensions',
-          '--disable-default-apps',
-          '--disable-background-timer-throttling',
-          '--disable-backgrounding-occluded-windows',
-          '--disable-renderer-backgrounding'
-        ],
-        // headless: "new", // 최신 headless 모드 사용 (필요시)
-        defaultViewport: null,
-        // ignoreHTTPSErrors: true
-      });
-      
+      this.browser = await BrowserLauncher.launch();
       console.log(`[ScreenshotCapture] 브라우저 초기화 완료`);
-      
     } catch (error) {
       console.error(`[ScreenshotCapture] 브라우저 초기화 실패:`, error);
       throw error;
