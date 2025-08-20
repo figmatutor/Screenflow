@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { captureStore } from '@/lib/capture-store-memory';
+import { captureStore } from '@/lib/capture-store-hybrid';
 import { createSuccessResponse, createErrorResponse, createOptionsResponse, createServerErrorResponse } from '@/lib/api-utils';
 
 // Puppeteer 없이 간단한 모킹 버전
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     console.log(`[Simple Auto Capture API] 간단한 캡처 시작: ${url} (세션: ${sessionId})`);
     
     // 즉시 완료된 상태로 모킹
-    captureStore.set(sessionId, { 
+    await captureStore.set(sessionId, { 
       status: 'completed',
       createdAt: new Date(),
       result: {
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
     return createErrorResponse('Session ID is required');
   }
   
-  const captureInfo = captureStore.get(sessionId);
+  const captureInfo = await captureStore.get(sessionId);
   
   if (!captureInfo) {
     return createErrorResponse('Session not found', 404);
