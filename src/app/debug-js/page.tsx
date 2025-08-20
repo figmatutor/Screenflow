@@ -109,6 +109,42 @@ export default function DebugPage() {
     }
   };
 
+  const testPngConversion = async () => {
+    addLog('PNG Base64 변환 테스트 시작');
+    try {
+      // 1. 바이너리 PNG 테스트
+      addLog('1단계: 바이너리 PNG 다운로드 테스트');
+      const binaryResponse = await fetch('/api/test-png?type=png&format=binary');
+      addLog(`바이너리 PNG status: ${binaryResponse.status}`);
+      addLog(`바이너리 PNG Content-Type: ${binaryResponse.headers.get('Content-Type')}`);
+      
+      // 2. Base64 PNG 테스트
+      addLog('2단계: Base64 PNG 변환 테스트');
+      const base64Response = await fetch('/api/test-png?type=png&format=base64');
+      addLog(`Base64 PNG status: ${base64Response.status}`);
+      const base64Data = await base64Response.json();
+      addLog(`Base64 PNG response: ${JSON.stringify(base64Data)}`);
+      
+      // 3. 왕복 테스트
+      addLog('3단계: PNG → Base64 → PNG 왕복 테스트');
+      const roundtripResponse = await fetch('/api/test-png?type=roundtrip');
+      addLog(`왕복 테스트 status: ${roundtripResponse.status}`);
+      const roundtripData = await roundtripResponse.json();
+      addLog(`왕복 테스트 response: ${JSON.stringify(roundtripData)}`);
+      
+      // 결과 판정
+      if (base64Data.bufferValid && roundtripData.isIdentical) {
+        setResult('✅ PNG Base64 변환 모든 테스트 통과');
+      } else {
+        setResult('❌ PNG Base64 변환 테스트 실패');
+      }
+      
+    } catch (error) {
+      addLog(`❌ PNG 테스트 오류: ${error}`);
+      setResult('❌ PNG 테스트 오류');
+    }
+  };
+
   return (
     <div style={{ padding: '20px', fontFamily: 'monospace' }}>
       <h1>🔧 JavaScript 디버깅 페이지</h1>
@@ -128,6 +164,9 @@ export default function DebugPage() {
         </button>
         <button onClick={testSyncCapture} style={{ marginLeft: '10px', padding: '10px' }}>
           동기식 캡처 테스트
+        </button>
+        <button onClick={testPngConversion} style={{ marginLeft: '10px', padding: '10px' }}>
+          PNG Base64 테스트
         </button>
       </div>
 
