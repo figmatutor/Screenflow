@@ -522,7 +522,7 @@ export function ScreencaptureStudio() {
                                 <h1 className="text-[44px] font-bold tracking-tight leading-[48px] bg-clip-text text-transparent bg-gradient-to-r from-white via-white/90 to-white/40" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif', letterSpacing: '-1.2px' }}>
                                     레퍼런스 수집
                                 </h1>
-                                <h2 className="text-[44px] font-bold tracking-tight leading-[40px] text-white/80" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif', letterSpacing: '-0.9px' }}>
+                                <h2 className="text-[28px] md:text-[36px] lg:text-[44px] font-bold tracking-tight leading-[32px] md:leading-[36px] lg:leading-[40px] text-white/80" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif', letterSpacing: '-0.9px' }}>
                                     이제 링크 한 줄로 끝.
                                 </h2>
                                 <motion.div 
@@ -662,10 +662,10 @@ export function ScreencaptureStudio() {
                                 animate={{ opacity: 1, y: 0 }}
                                 className="space-y-4"
                             >
-                                <h2 className="text-[44px] font-bold leading-[40px] bg-clip-text text-transparent bg-gradient-to-r from-white via-white/90 to-white/40" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif', letterSpacing: '-0.9px' }}>
+                                <h2 className="text-[28px] md:text-[36px] lg:text-[44px] font-bold leading-[32px] md:leading-[36px] lg:leading-[40px] bg-clip-text text-transparent bg-gradient-to-r from-white via-white/90 to-white/40" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif', letterSpacing: '-0.9px' }}>
                                     알려주신 링크에 들어가서
                                 </h2>
-                                <h3 className="text-[44px] font-bold leading-[48px] bg-clip-text text-transparent bg-gradient-to-r from-white via-white/90 to-white/40" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif', letterSpacing: '-1.2px' }}>
+                                <h3 className="text-[28px] md:text-[36px] lg:text-[44px] font-bold leading-[32px] md:leading-[40px] lg:leading-[48px] bg-clip-text text-transparent bg-gradient-to-r from-white via-white/90 to-white/40" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif', letterSpacing: '-1.2px' }}>
                                     열심히 탐험하고 있어요
                                 </h3>
                                 <motion.div 
@@ -850,7 +850,7 @@ export function ScreencaptureStudio() {
                                 animate={{ opacity: 1, y: 0 }}
                                 className="text-center space-y-4"
                             >
-                                <h2 className="text-3xl md:text-4xl font-semibold">🎉 보드 완성!</h2>
+                                <h2 className="text-[28px] md:text-[36px] lg:text-[44px] font-semibold">🎉 보드 완성!</h2>
                                 <p className="text-lg text-white/70">
                                     총 {crawledPages.filter(p => p.success).length}개의 멋진 화면을 수집했어요
                                 </p>
@@ -972,7 +972,7 @@ export function ScreencaptureStudio() {
                                 className="space-y-4"
                             >
                                 <CheckCircle2 className="w-16 h-16 text-green-400 mx-auto" />
-                                <h2 className="text-3xl font-semibold">다운로드 완료!</h2>
+                                <h2 className="text-[28px] md:text-[36px] lg:text-[44px] font-semibold">다운로드 완료!</h2>
                                 <p className="text-white/60">
                                     {selectedPages.length}개의 스크린샷이 성공적으로 다운로드되었습니다.
                                 </p>
