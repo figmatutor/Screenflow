@@ -497,13 +497,13 @@ export function ScreencaptureStudio() {
                     <div className="flex items-center gap-4">
                         <span className="text-sm text-white/60 font-normal">가입하기</span>
                         <button className="px-4 py-2 bg-white text-black rounded-lg text-sm font-medium hover:bg-white/90 transition-colors">
-                            로그인
+                            무료로 시작하기
                         </button>
                     </div>
                 </div>
             </motion.div>
 
-            <div className="w-full max-w-4xl mx-auto relative mt-20">
+            <div className="w-full max-w-4xl mx-auto relative mt-[180px]">
                 <motion.div 
                     className="relative z-10 space-y-12"
                     initial={{ opacity: 0, y: 20 }}
@@ -519,10 +519,10 @@ export function ScreencaptureStudio() {
                                 transition={{ delay: 0.2, duration: 0.5 }}
                                 className="space-y-4"
                             >
-                                <h1 className="text-[44px] font-bold tracking-tight leading-[48px] bg-clip-text text-transparent bg-gradient-to-r from-white via-white/90 to-white/40" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif', letterSpacing: '-1.2px' }}>
+                                <h1 className="text-[24px] md:text-[36px] lg:text-[44px] font-bold tracking-tight leading-[28px] md:leading-[40px] lg:leading-[48px] bg-clip-text text-transparent bg-gradient-to-r from-white via-white/90 to-white/40" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif', letterSpacing: '-1.2px' }}>
                                     레퍼런스 수집
                                 </h1>
-                                <h2 className="text-[28px] md:text-[36px] lg:text-[44px] font-bold tracking-tight leading-[32px] md:leading-[36px] lg:leading-[40px] text-white/80" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif', letterSpacing: '-0.9px' }}>
+                                <h2 className="text-[24px] md:text-[36px] lg:text-[44px] font-bold tracking-tight leading-[28px] md:leading-[40px] lg:leading-[48px] text-white/80" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif', letterSpacing: '-0.9px' }}>
                                     이제 링크 한 줄로 끝.
                                 </h2>
                                 <motion.div 
@@ -532,7 +532,7 @@ export function ScreencaptureStudio() {
                                     transition={{ delay: 0.5, duration: 0.8 }}
                                 />
                                 <motion.p 
-                                    className="text-base text-white/50 max-w-lg mx-auto leading-7"
+                                    className="text-[14px] md:text-[16px] lg:text-[16px] text-white/50 max-w-lg mx-auto leading-7"
                                     style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif' }}
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
@@ -541,6 +541,8 @@ export function ScreencaptureStudio() {
                                     레퍼런스를 자동으로 수집하고, 공유하세요.
                                 </motion.p>
                             </motion.div>
+
+
 
                             <motion.div 
                                 className="relative backdrop-blur-2xl bg-white/[0.019] rounded-2xl border border-white/[0.05] shadow-2xl max-w-[672px] mx-auto"
@@ -651,6 +653,176 @@ export function ScreencaptureStudio() {
                                     {error}
                                 </motion.div>
                             )}
+
+                            {/* 섹션 간 여백 150px */}
+                            <div className="h-[150px]" />
+
+                            {/* 3단계 프로세스 섹션 - 패럴랙스 효과 + 모노톤 디자인 */}
+                        <motion.div 
+                            className="space-y-8 max-w-6xl mx-auto relative"
+                            initial={{ opacity: 0, y: 40 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true, margin: "-100px" }}
+                            transition={{ duration: 0.8, delay: 0.15 }}
+                        >
+                            {/* 섹션 타이틀 - 패럴랙스 효과 */}
+                            <motion.div 
+                                className="text-center space-y-4"
+                                initial={{ opacity: 0, y: 30 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true, margin: "-50px" }}
+                                transition={{ duration: 0.6, delay: 0.1 }}
+                            >
+                                <h2 className="text-[24px] md:text-[36px] lg:text-[44px] font-bold tracking-tight leading-[28px] md:leading-[40px] lg:leading-[48px] text-white/80" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif', letterSpacing: '-0.9px' }}>
+                                    번거로운 웹 레퍼런스 캡쳐
+                                </h2>
+                                <h3 className="text-[12px] md:text-[36px] lg:text-[44px] font-bold leading-[16px] md:leading-[40px] lg:leading-[48px] bg-clip-text text-transparent bg-gradient-to-r from-white via-white/90 to-white/40" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif', letterSpacing: '-0.9px' }}>
+                                    딱 3단계로 완성.
+                                </h3>
+                                <motion.div 
+                                    className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent max-w-md mx-auto"
+                                    initial={{ width: 0, opacity: 0 }}
+                                    animate={{ width: "100%", opacity: 1 }}
+                                    transition={{ delay: 0.8, duration: 0.8 }}
+                                />
+                                <motion.p 
+                                    className="text-[14px] md:text-[16px] lg:text-[16px] text-white/50 max-w-lg mx-auto leading-7"
+                                    style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif' }}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ delay: 0.9 }}
+                                >
+                                    복잡한 설정이나 다운로드 없이 링크 넣고 필요한 부분만 바로 다운로드.
+                                </motion.p>
+                            </motion.div>
+
+                            {/* 3단계 카드 그리드 - 모노톤 디자인 + 패럴랙스 */}
+                            <motion.div 
+                                className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12"
+                                initial={{ opacity: 0, y: 40 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true, margin: "-80px" }}
+                                transition={{ duration: 0.8, delay: 0.2 }}
+                            >
+                                {/* Card 1 - 개별 패럴랙스 효과 */}
+                                <motion.div 
+                                    className="relative backdrop-blur-2xl bg-white/[0.019] rounded-2xl border border-white/[0.05] shadow-2xl p-6 text-center"
+                                    initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                                    whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                                    viewport={{ once: true, margin: "-50px" }}
+                                    transition={{ duration: 0.6, delay: 0.05, type: "spring", stiffness: 100 }}
+                                    whileHover={{ scale: 1.02, borderColor: "rgba(255,255,255,0.1)", transition: { duration: 0.2 } }}
+                                >
+                                    <div className="mb-6">
+                                        <div className="w-12 h-12 rounded-full bg-white/[0.08] border border-white/[0.15] flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
+                                            <Link className="w-6 h-6 text-white/70" />
+                                        </div>
+                                    </div>
+                                    <h3 className="text-lg font-semibold text-white mb-3" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif' }}>
+                                        URL 입력 & 플로우 탐색
+                                    </h3>
+                                    <p className="text-[14px] md:text-[16px] lg:text-[16px] text-white/60 leading-6" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif' }}>
+                                        분석하고 싶은 URL을 입력하면<br />
+                                        사이트 구조를 파악합니다.
+                                    </p>
+                                </motion.div>
+
+                                {/* Card 2 - 개별 패럴랙스 효과 */}
+                                <motion.div 
+                                    className="relative backdrop-blur-2xl bg-white/[0.019] rounded-2xl border border-white/[0.05] shadow-2xl p-6 text-center"
+                                    initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                                    whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                                    viewport={{ once: true, margin: "-50px" }}
+                                    transition={{ duration: 0.6, delay: 0.1, type: "spring", stiffness: 100 }}
+                                    whileHover={{ scale: 1.02, borderColor: "rgba(255,255,255,0.1)", transition: { duration: 0.2 } }}
+                                >
+                                    <div className="mb-6">
+                                        <div className="w-12 h-12 rounded-full bg-white/[0.06] border border-white/[0.12] flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
+                                            <Camera className="w-6 h-6 text-white/60" />
+                                        </div>
+                                    </div>
+                                    <h3 className="text-lg font-semibold text-white mb-3" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif' }}>
+                                        자동 스크린샷 캡쳐
+                                    </h3>
+                                    <p className="text-[14px] md:text-[16px] lg:text-[16px] text-white/60 leading-6" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif' }}>
+                                        탐색한 플로우는<br />
+                                        실시간으로 캡쳐됩니다.
+                                    </p>
+                                </motion.div>
+
+                                {/* Card 3 - 개별 패럴랙스 효과 */}
+                                <motion.div 
+                                    className="relative backdrop-blur-2xl bg-white/[0.019] rounded-2xl border border-white/[0.05] shadow-2xl p-6 text-center"
+                                    initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                                    whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                                    viewport={{ once: true, margin: "-50px" }}
+                                    transition={{ duration: 0.6, delay: 0.15, type: "spring", stiffness: 100 }}
+                                    whileHover={{ scale: 1.02, borderColor: "rgba(255,255,255,0.1)", transition: { duration: 0.2 } }}
+                                >
+                                    <div className="mb-6">
+                                        <div className="w-12 h-12 rounded-full bg-white/[0.10] border border-white/[0.18] flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
+                                            <Download className="w-6 h-6 text-white/80" />
+                                        </div>
+                                    </div>
+                                    <h3 className="text-lg font-semibold text-white mb-3" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif' }}>
+                                        스크린샷 저장
+                                    </h3>
+                                    <p className="text-[14px] md:text-[16px] lg:text-[16px] text-white/60 leading-6" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif' }}>
+                                        캡쳐한 이미지는 다운로드<br />
+                                        또는 피그마로 가져가세요.
+                                    </p>
+                                </motion.div>
+                            </motion.div>
+                        </motion.div>
+
+                        {/* 3단계 섹션 하단 여백 120px */}
+                        <div className="h-[120px]" />
+
+                        {/* CTA 섹션 - 패럴랙스 효과 */}
+                        <motion.div 
+                            className="space-y-8 max-w-4xl mx-auto text-center relative"
+                            initial={{ opacity: 0, y: 40 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true, margin: "-100px" }}
+                            transition={{ duration: 0.8, delay: 0.1 }}
+                        >
+                            {/* CTA 메인 타이틀 */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 30 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true, margin: "-50px" }}
+                                transition={{ duration: 0.6, delay: 0.15 }}
+                            >
+                                <h2 className="text-[24px] md:text-[36px] lg:text-[44px] font-bold tracking-tight leading-[28px] md:leading-[40px] lg:leading-[48px] text-white mb-4" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif', letterSpacing: '-0.9px' }}>
+                                    지금 바로 시작해보세요
+                                </h2>
+                                <p className="text-[14px] md:text-[16px] lg:text-[16px] text-white/70 leading-6 mb-8" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif' }}>
+                                    복잡한 설정 없이 링크 하나로 웹 레퍼런스를 수집하세요
+                                </p>
+                            </motion.div>
+
+                            {/* CTA 버튼 - 메인만 유지 */}
+                            <motion.div 
+                                className="flex justify-center"
+                                initial={{ opacity: 0, y: 30 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true, margin: "-50px" }}
+                                transition={{ duration: 0.6, delay: 0.25 }}
+                            >
+                                {/* 메인 CTA 버튼만 유지 */}
+                                <motion.button
+                                    className="px-8 py-4 bg-white text-black rounded-xl font-semibold hover:bg-white/90 transition-all duration-300 shadow-lg"
+                                    whileHover={{ scale: 1.05, boxShadow: "0 10px 40px rgba(255,255,255,0.1)" }}
+                                    whileTap={{ scale: 0.98 }}
+                                    style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif' }}
+                                >
+                                    무료로 시작하기
+                                </motion.button>
+                            </motion.div>
+                        </motion.div>
+
+                            {/* CTA 섹션 하단 여백 400px */}
+                            <div className="h-[400px]" />
                         </div>
                     )}
 
@@ -851,7 +1023,7 @@ export function ScreencaptureStudio() {
                                 className="text-center space-y-4"
                             >
                                 <h2 className="text-[28px] md:text-[36px] lg:text-[44px] font-semibold">🎉 보드 완성!</h2>
-                                <p className="text-lg text-white/70">
+                                <p className="text-[14px] md:text-[16px] lg:text-[16px] text-white/70">
                                     총 {crawledPages.filter(p => p.success).length}개의 멋진 화면을 수집했어요
                                 </p>
                                 <p className="text-sm text-white/50">
