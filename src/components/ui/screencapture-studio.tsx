@@ -493,7 +493,13 @@ export function ScreencaptureStudio() {
                 style={{ height: '69px' }}
             >
                 <div className="flex items-center justify-between px-6 h-full max-w-[1280px] mx-auto">
-                                                    <h1 className="text-[19.375px] font-bold text-white leading-7" style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif' }}>ScreenFlow</h1>
+                    <a 
+                        href="/" 
+                        className="text-[19.375px] font-bold text-white leading-7 hover:text-white/80 transition-colors cursor-pointer" 
+                        style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif' }}
+                    >
+                        ScreenFlow
+                    </a>
                     <div className="flex items-center gap-4">
                         <span className="text-sm text-white/60 font-normal">가입하기</span>
                         <button className="px-4 py-2 bg-white text-black rounded-lg text-sm font-medium hover:bg-white/90 transition-colors">
@@ -503,7 +509,7 @@ export function ScreencaptureStudio() {
                 </div>
             </motion.div>
 
-            <div className="w-full max-w-4xl mx-auto relative mt-[180px]">
+            <div className="w-full max-w-4xl mx-auto relative mt-[280px]">
                 <motion.div 
                     className="relative z-10 space-y-12"
                     initial={{ opacity: 0, y: 20 }}
@@ -522,7 +528,7 @@ export function ScreencaptureStudio() {
                                 <h1 className="text-[24px] md:text-[36px] lg:text-[44px] font-bold tracking-tight leading-[28px] md:leading-[40px] lg:leading-[48px] bg-clip-text text-transparent bg-gradient-to-r from-white via-white/90 to-white/40" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif', letterSpacing: '-1.2px' }}>
                                     레퍼런스 수집
                                 </h1>
-                                <h2 className="text-[24px] md:text-[36px] lg:text-[44px] font-bold tracking-tight leading-[28px] md:leading-[40px] lg:leading-[48px] text-white/80" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif', letterSpacing: '-0.9px' }}>
+                                <h2 className="text-[28px] md:text-[36px] lg:text-[44px] font-bold tracking-tight leading-[32px] md:leading-[40px] lg:leading-[48px] text-white/80" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif', letterSpacing: '-0.9px' }}>
                                     이제 링크 한 줄로 끝.
                                 </h2>
                                 <motion.div 
@@ -662,7 +668,7 @@ export function ScreencaptureStudio() {
                             className="space-y-8 max-w-6xl mx-auto relative"
                             initial={{ opacity: 0, y: 40 }}
                             whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true, margin: "-100px" }}
+                            viewport={{ once: false, margin: "-100px" }}
                             transition={{ duration: 0.8, delay: 0.15 }}
                         >
                             {/* 섹션 타이틀 - 패럴랙스 효과 */}
@@ -670,10 +676,10 @@ export function ScreencaptureStudio() {
                                 className="text-center space-y-4"
                                 initial={{ opacity: 0, y: 30 }}
                                 whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true, margin: "-50px" }}
+                                viewport={{ once: false, margin: "-50px" }}
                                 transition={{ duration: 0.6, delay: 0.1 }}
                             >
-                                <h2 className="text-[24px] md:text-[36px] lg:text-[44px] font-bold tracking-tight leading-[28px] md:leading-[40px] lg:leading-[48px] text-white/80" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif', letterSpacing: '-0.9px' }}>
+                                <h2 className="text-[28px] md:text-[36px] lg:text-[44px] font-bold tracking-tight leading-[32px] md:leading-[40px] lg:leading-[48px] text-white/80" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif', letterSpacing: '-0.9px' }}>
                                     번거로운 웹 레퍼런스 캡쳐
                                 </h2>
                                 <h3 className="text-[12px] md:text-[36px] lg:text-[44px] font-bold leading-[16px] md:leading-[40px] lg:leading-[48px] bg-clip-text text-transparent bg-gradient-to-r from-white via-white/90 to-white/40" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif', letterSpacing: '-0.9px' }}>
@@ -701,7 +707,7 @@ export function ScreencaptureStudio() {
                                 className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12"
                                 initial={{ opacity: 0, y: 40 }}
                                 whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true, margin: "-80px" }}
+                                viewport={{ once: false, margin: "-80px" }}
                                 transition={{ duration: 0.8, delay: 0.2 }}
                             >
                                 {/* Card 1 - 개별 패럴랙스 효과 */}
@@ -709,7 +715,7 @@ export function ScreencaptureStudio() {
                                     className="relative backdrop-blur-2xl bg-white/[0.019] rounded-2xl border border-white/[0.05] shadow-2xl p-6 text-center"
                                     initial={{ opacity: 0, y: 30, scale: 0.95 }}
                                     whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                                    viewport={{ once: true, margin: "-50px" }}
+                                    viewport={{ once: false, margin: "-50px" }}
                                     transition={{ duration: 0.6, delay: 0.05, type: "spring", stiffness: 100 }}
                                     whileHover={{ scale: 1.02, borderColor: "rgba(255,255,255,0.1)", transition: { duration: 0.2 } }}
                                 >
@@ -732,7 +738,7 @@ export function ScreencaptureStudio() {
                                     className="relative backdrop-blur-2xl bg-white/[0.019] rounded-2xl border border-white/[0.05] shadow-2xl p-6 text-center"
                                     initial={{ opacity: 0, y: 30, scale: 0.95 }}
                                     whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                                    viewport={{ once: true, margin: "-50px" }}
+                                    viewport={{ once: false, margin: "-50px" }}
                                     transition={{ duration: 0.6, delay: 0.1, type: "spring", stiffness: 100 }}
                                     whileHover={{ scale: 1.02, borderColor: "rgba(255,255,255,0.1)", transition: { duration: 0.2 } }}
                                 >
@@ -755,7 +761,7 @@ export function ScreencaptureStudio() {
                                     className="relative backdrop-blur-2xl bg-white/[0.019] rounded-2xl border border-white/[0.05] shadow-2xl p-6 text-center"
                                     initial={{ opacity: 0, y: 30, scale: 0.95 }}
                                     whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                                    viewport={{ once: true, margin: "-50px" }}
+                                    viewport={{ once: false, margin: "-50px" }}
                                     transition={{ duration: 0.6, delay: 0.15, type: "spring", stiffness: 100 }}
                                     whileHover={{ scale: 1.02, borderColor: "rgba(255,255,255,0.1)", transition: { duration: 0.2 } }}
                                 >
@@ -783,17 +789,17 @@ export function ScreencaptureStudio() {
                             className="space-y-8 max-w-4xl mx-auto text-center relative"
                             initial={{ opacity: 0, y: 40 }}
                             whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true, margin: "-100px" }}
+                            viewport={{ once: false, margin: "-100px" }}
                             transition={{ duration: 0.8, delay: 0.1 }}
                         >
                             {/* CTA 메인 타이틀 */}
                             <motion.div
                                 initial={{ opacity: 0, y: 30 }}
                                 whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true, margin: "-50px" }}
+                                viewport={{ once: false, margin: "-50px" }}
                                 transition={{ duration: 0.6, delay: 0.15 }}
                             >
-                                <h2 className="text-[24px] md:text-[36px] lg:text-[44px] font-bold tracking-tight leading-[28px] md:leading-[40px] lg:leading-[48px] text-white mb-4" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif', letterSpacing: '-0.9px' }}>
+                                <h2 className="text-[28px] md:text-[36px] lg:text-[44px] font-bold tracking-tight leading-[32px] md:leading-[40px] lg:leading-[48px] text-white mb-4" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif', letterSpacing: '-0.9px' }}>
                                     지금 바로 시작해보세요
                                 </h2>
                                 <p className="text-[14px] md:text-[16px] lg:text-[16px] text-white/70 leading-6 mb-8" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif' }}>
@@ -806,7 +812,7 @@ export function ScreencaptureStudio() {
                                 className="flex justify-center"
                                 initial={{ opacity: 0, y: 30 }}
                                 whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true, margin: "-50px" }}
+                                viewport={{ once: false, margin: "-50px" }}
                                 transition={{ duration: 0.6, delay: 0.25 }}
                             >
                                 {/* 메인 CTA 버튼만 유지 */}
