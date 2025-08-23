@@ -775,8 +775,8 @@ export function ScreencaptureStudio() {
                             </motion.div>
                         </motion.div>
 
-                        {/* 3단계 섹션 하단 여백 120px */}
-                        <div className="h-[120px]" />
+                        {/* 3단계 섹션 하단 여백 240px (120px + 추가 120px) */}
+                        <div className="h-[240px]" />
 
                         {/* CTA 섹션 - 패럴랙스 효과 */}
                         <motion.div 
