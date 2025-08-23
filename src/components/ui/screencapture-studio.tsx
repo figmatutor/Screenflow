@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback, useTransition } from "react";
+import { useEffect, useRef, useCallback, useTransition, useMemo } from "react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import {
@@ -223,6 +223,30 @@ function ImagePreview({ src, alt, title, url }: ImagePreviewProps) {
 }
 
 export function ScreencaptureStudio() {
+    // 성능 최적화: 모바일 및 저성능 디바이스 감지
+    const isMobile = useMemo(() => {
+        if (typeof window !== 'undefined') {
+            return window.innerWidth < 768 || 
+                   /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
+        return false;
+    }, []);
+
+    // 성능 최적화: reduced motion 감지
+    const prefersReducedMotion = useMemo(() => {
+        if (typeof window !== 'undefined') {
+            return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        }
+        return false;
+    }, []);
+
+    // 최적화된 애니메이션 설정
+    const optimizedAnimationConfig = useMemo(() => ({
+        duration: isMobile || prefersReducedMotion ? 0.3 : 0.8,
+        ease: "easeOut",
+        delay: isMobile ? 0 : 0.15
+    }), [isMobile, prefersReducedMotion]);
+
     const [currentStep, setCurrentStep] = useState<'input' | 'crawling' | 'preview' | 'complete' | 'download'>('input');
     const [inputUrl, setInputUrl] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -466,8 +490,13 @@ export function ScreencaptureStudio() {
         <BeamsBackground 
             intensity="subtle" 
             className="min-h-screen bg-black"
+            style={{
+                willChange: 'transform',
+                backfaceVisibility: 'hidden',
+                perspective: 1000
+            }}
         >
-            <div className="min-h-screen flex flex-col w-full items-center justify-center text-white p-6 relative">
+            <div className="min-h-screen flex flex-col w-full items-center justify-center text-white p-6 relative optimize-scroll">
             {/* 배경 효과 - BeamsBackground와 조화롭게 조정 */}
             <div className="absolute inset-0 w-full h-full overflow-hidden opacity-40">
                 <div className="absolute top-0 left-1/4 w-96 h-96 bg-violet-500/15 rounded-full mix-blend-screen filter blur-[128px] animate-pulse" />
@@ -665,19 +694,23 @@ export function ScreencaptureStudio() {
 
                             {/* 3단계 프로세스 섹션 - 패럴랙스 효과 + 모노톤 디자인 */}
                         <motion.div 
-                            className="space-y-8 max-w-6xl mx-auto relative"
-                            initial={{ opacity: 0, y: 40 }}
+                            className="space-y-8 max-w-6xl mx-auto relative will-change-transform transform-gpu"
+                            initial={{ opacity: 0, y: isMobile ? 20 : 40 }}
                             whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: false, margin: "-100px" }}
-                            transition={{ duration: 0.8, delay: 0.15 }}
+                            viewport={{ 
+                                once: isMobile || prefersReducedMotion, 
+                                margin: "-100px", 
+                                amount: isMobile ? 0.2 : 0.3 
+                            }}
+                            transition={optimizedAnimationConfig}
                         >
                             {/* 섹션 타이틀 - 패럴랙스 효과 */}
                             <motion.div 
-                                className="text-center space-y-4"
+                                className="text-center space-y-4 will-change-transform"
                                 initial={{ opacity: 0, y: 30 }}
                                 whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: false, margin: "-50px" }}
-                                transition={{ duration: 0.6, delay: 0.1 }}
+                                viewport={{ once: false, margin: "-50px", amount: 0.5 }}
+                                transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
                             >
                                 <h2 className="text-[28px] md:text-[36px] lg:text-[44px] font-bold tracking-tight leading-[32px] md:leading-[40px] lg:leading-[48px] text-white/80" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif', letterSpacing: '-0.9px' }}>
                                     번거로운 웹 레퍼런스 캡쳐
@@ -712,12 +745,30 @@ export function ScreencaptureStudio() {
                             >
                                 {/* Card 1 - 개별 패럴랙스 효과 */}
                                 <motion.div 
-                                    className="relative backdrop-blur-2xl bg-white/[0.019] rounded-2xl border border-white/[0.05] shadow-2xl p-6 text-center"
-                                    initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                                    className="relative backdrop-blur-2xl bg-white/[0.019] rounded-2xl border border-white/[0.05] shadow-2xl p-6 text-center will-change-transform"
+                                    initial={{ 
+                                        opacity: 0, 
+                                        y: isMobile ? 15 : 30, 
+                                        scale: isMobile ? 1 : 0.95 
+                                    }}
                                     whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                                    viewport={{ once: false, margin: "-50px" }}
-                                    transition={{ duration: 0.6, delay: 0.05, type: "spring", stiffness: 100 }}
-                                    whileHover={{ scale: 1.02, borderColor: "rgba(255,255,255,0.1)", transition: { duration: 0.2 } }}
+                                    viewport={{ 
+                                        once: isMobile || prefersReducedMotion, 
+                                        margin: "-50px",
+                                        amount: 0.4
+                                    }}
+                                    transition={{ 
+                                        duration: optimizedAnimationConfig.duration, 
+                                        delay: isMobile ? 0 : 0.05, 
+                                        type: isMobile ? "tween" : "spring", 
+                                        stiffness: 100,
+                                        ease: optimizedAnimationConfig.ease
+                                    }}
+                                    whileHover={!isMobile && !prefersReducedMotion ? { 
+                                        scale: 1.02, 
+                                        borderColor: "rgba(255,255,255,0.1)", 
+                                        transition: { duration: 0.2 } 
+                                    } : {}}
                                 >
                                     <div className="mb-6">
                                         <div className="w-12 h-12 rounded-full bg-white/[0.08] border border-white/[0.15] flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
@@ -735,12 +786,30 @@ export function ScreencaptureStudio() {
 
                                 {/* Card 2 - 개별 패럴랙스 효과 */}
                                 <motion.div 
-                                    className="relative backdrop-blur-2xl bg-white/[0.019] rounded-2xl border border-white/[0.05] shadow-2xl p-6 text-center"
-                                    initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                                    className="relative backdrop-blur-2xl bg-white/[0.019] rounded-2xl border border-white/[0.05] shadow-2xl p-6 text-center will-change-transform"
+                                    initial={{ 
+                                        opacity: 0, 
+                                        y: isMobile ? 15 : 30, 
+                                        scale: isMobile ? 1 : 0.95 
+                                    }}
                                     whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                                    viewport={{ once: false, margin: "-50px" }}
-                                    transition={{ duration: 0.6, delay: 0.1, type: "spring", stiffness: 100 }}
-                                    whileHover={{ scale: 1.02, borderColor: "rgba(255,255,255,0.1)", transition: { duration: 0.2 } }}
+                                    viewport={{ 
+                                        once: isMobile || prefersReducedMotion, 
+                                        margin: "-50px",
+                                        amount: 0.4
+                                    }}
+                                    transition={{ 
+                                        duration: optimizedAnimationConfig.duration, 
+                                        delay: isMobile ? 0 : 0.1, 
+                                        type: isMobile ? "tween" : "spring", 
+                                        stiffness: 100,
+                                        ease: optimizedAnimationConfig.ease
+                                    }}
+                                    whileHover={!isMobile && !prefersReducedMotion ? { 
+                                        scale: 1.02, 
+                                        borderColor: "rgba(255,255,255,0.1)", 
+                                        transition: { duration: 0.2 } 
+                                    } : {}}
                                 >
                                     <div className="mb-6">
                                         <div className="w-12 h-12 rounded-full bg-white/[0.06] border border-white/[0.12] flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
@@ -758,12 +827,30 @@ export function ScreencaptureStudio() {
 
                                 {/* Card 3 - 개별 패럴랙스 효과 */}
                                 <motion.div 
-                                    className="relative backdrop-blur-2xl bg-white/[0.019] rounded-2xl border border-white/[0.05] shadow-2xl p-6 text-center"
-                                    initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                                    className="relative backdrop-blur-2xl bg-white/[0.019] rounded-2xl border border-white/[0.05] shadow-2xl p-6 text-center will-change-transform"
+                                    initial={{ 
+                                        opacity: 0, 
+                                        y: isMobile ? 15 : 30, 
+                                        scale: isMobile ? 1 : 0.95 
+                                    }}
                                     whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                                    viewport={{ once: false, margin: "-50px" }}
-                                    transition={{ duration: 0.6, delay: 0.15, type: "spring", stiffness: 100 }}
-                                    whileHover={{ scale: 1.02, borderColor: "rgba(255,255,255,0.1)", transition: { duration: 0.2 } }}
+                                    viewport={{ 
+                                        once: isMobile || prefersReducedMotion, 
+                                        margin: "-50px",
+                                        amount: 0.4
+                                    }}
+                                    transition={{ 
+                                        duration: optimizedAnimationConfig.duration, 
+                                        delay: isMobile ? 0 : 0.15, 
+                                        type: isMobile ? "tween" : "spring", 
+                                        stiffness: 100,
+                                        ease: optimizedAnimationConfig.ease
+                                    }}
+                                    whileHover={!isMobile && !prefersReducedMotion ? { 
+                                        scale: 1.02, 
+                                        borderColor: "rgba(255,255,255,0.1)", 
+                                        transition: { duration: 0.2 } 
+                                    } : {}}
                                 >
                                     <div className="mb-6">
                                         <div className="w-12 h-12 rounded-full bg-white/[0.10] border border-white/[0.18] flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">

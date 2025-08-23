@@ -2,6 +2,40 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 성능 최적화: GPU 가속 및 스크롤 최적화 */
+@layer utilities {
+  .transform-gpu {
+    transform: translateZ(0);
+    will-change: transform;
+    backface-visibility: hidden;
+  }
+  
+  .optimize-scroll {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* 모바일 디바이스에서 패럴렉스 최적화 */
+  @media (max-width: 768px) {
+    .will-change-transform {
+      will-change: auto;
+    }
+    
+    /* prefers-reduced-motion을 지원하는 브라우저에서 애니메이션 축소 */
+    @media (prefers-reduced-motion: reduce) {
+      .will-change-transform {
+        will-change: auto;
+      }
+      
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  }
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
