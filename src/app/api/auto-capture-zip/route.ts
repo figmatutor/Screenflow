@@ -107,21 +107,30 @@ export async function POST(req: NextRequest) {
       console.log(`[Auto Capture ZIP] 내부 링크 수집 완료: ${internalLinks.length}개`);
       internalLinks.forEach((link, i) => console.log(`  ${i + 1}. ${link}`));
 
-      // 3. 각 링크별 스크린샷 캡처 (BFS 방식)
+      // 3. 각 링크별 스크린샷 캡처 (수정된 로직)
       const zip = new JSZip();
       const visited = new Set<string>();
       const screenshots: CaptureResult[] = [];
-      const pagesToVisit = [{ url, index: 0 }];
-      let count = 0;
+      
+      // 메인 페이지 + 내부 링크들을 순서대로 캡처
+      const allUrlsToCapture = [url, ...internalLinks.slice(0, maxLinks - 1)];
+      
+      console.log(`[Auto Capture ZIP] 캡처할 URL 목록 (총 ${allUrlsToCapture.length}개):`);
+      allUrlsToCapture.forEach((captureUrl, i) => console.log(`  ${i + 1}. ${captureUrl}`));
 
-      // 메인 페이지부터 시작해서 연관 링크들을 순회하며 캡처
-      while (pagesToVisit.length > 0 && count < maxLinks) {
-        const { url: targetUrl, index } = pagesToVisit.shift()!;
+      for (let count = 0; count < allUrlsToCapture.length && count < maxLinks; count++) {
+        const targetUrl = allUrlsToCapture[count];
         
-        if (visited.has(targetUrl)) continue;
-        visited.add(targetUrl);
+        // URL 정규화 (쿼리 파라미터, 해시 제거)
+        const normalizedUrl = normalizeUrl(targetUrl);
+        
+        if (visited.has(normalizedUrl)) {
+          console.log(`[Auto Capture ZIP] 중복 URL 스킵: ${targetUrl} (정규화: ${normalizedUrl})`);
+          continue;
+        }
+        visited.add(normalizedUrl);
 
-        console.log(`[Auto Capture ZIP] 캡처 시작 (${count + 1}/${maxLinks}): ${targetUrl}`);
+        console.log(`[Auto Capture ZIP] 캡처 시작 (${count + 1}/${allUrlsToCapture.length}): ${targetUrl}`);
 
         const newPage = await browser.newPage();
         try {
@@ -165,25 +174,9 @@ export async function POST(req: NextRequest) {
 
           // 플로우 캡처가 활성화된 경우 버튼 클릭 시퀀스 실행
           if (captureFlow) {
+            console.log(`[Auto Capture ZIP] 플로우 캡처 모드 활성화: ${targetUrl}`);
             await captureButtonFlow(newPage, zip, screenshots, flowKeywords, maxFlowSteps, targetUrl, count, timeout, waitUntil);
           }
-
-          // 현재 페이지에서 추가 링크 수집 (depth 확장) - 플로우 캡처가 아닌 경우에만
-          if (!captureFlow) {
-            const pageLinks = await newPage.$$eval('a[href^="http"]', anchors =>
-              anchors.map(a => a.href)
-            );
-
-            pageLinks.forEach((link, i) => {
-              if (!visited.has(link) && 
-                  new URL(link).hostname === baseUrl.hostname && 
-                  !pagesToVisit.some(p => p.url === link)) {
-                pagesToVisit.push({ url: link, index: count + i + 1 });
-              }
-            });
-          }
-
-          count++;
         } catch (error: any) {
           console.error(`[Auto Capture ZIP] 캡처 실패: ${targetUrl}`, error.message);
           screenshots.push({
@@ -192,7 +185,6 @@ export async function POST(req: NextRequest) {
             success: false,
             error: error.message
           });
-          count++;
         } finally {
           await newPage.close();
         }
@@ -320,6 +312,17 @@ async function launchBrowser() {
   }
 }
 
+// URL 정규화 함수 (중복 URL 방지)
+function normalizeUrl(url: string): string {
+  try {
+    const urlObj = new URL(url);
+    // 쿼리 파라미터와 해시 제거
+    return `${urlObj.protocol}//${urlObj.hostname}${urlObj.pathname}`;
+  } catch {
+    return url;
+  }
+}
+
 // 페이지 Bot Detection 방지 설정
 async function setupAntiDetection(page: any) {
   try {
@@ -386,20 +389,29 @@ async function setupAntiDetection(page: any) {
     // Request Interception 설정 (불필요한 리소스 차단)
     await page.setRequestInterception(true);
     page.on('request', (request: any) => {
-      const resourceType = request.resourceType();
-      const url = request.url();
+      try {
+        const resourceType = request.resourceType();
+        const url = request.url();
 
-      // 불필요한 리소스 차단 (성능 최적화)
-      if (resourceType === 'image' && !url.includes('logo') && !url.includes('icon')) {
-        request.abort();
-      } else if (resourceType === 'font') {
-        request.abort();
-      } else if (resourceType === 'media') {
-        request.abort();
-      } else if (resourceType === 'stylesheet' && url.includes('analytics')) {
-        request.abort();
-      } else {
-        request.continue();
+        // 불필요한 리소스 차단 (성능 최적화)
+        if (resourceType === 'image' && !url.includes('logo') && !url.includes('icon')) {
+          request.abort();
+        } else if (resourceType === 'font') {
+          request.abort();
+        } else if (resourceType === 'media') {
+          request.abort();
+        } else if (resourceType === 'stylesheet' && url.includes('analytics')) {
+          request.abort();
+        } else {
+          request.continue();
+        }
+      } catch (error) {
+        // 요청 처리 중 오류 시 기본 동작 수행
+        try {
+          request.continue();
+        } catch (e) {
+          // Request already handled
+        }
       }
     });
 
