@@ -24,10 +24,10 @@ export default function AutoCaptureZipPage() {
   const [status, setStatus] = useState<string>('');
   
   const [options, setOptions] = useState<CaptureOptions>({
-    maxLinks: 10,
+    maxLinks: 5,
     maxDepth: 1,
-    timeout: 30000,
-    waitUntil: 'domcontentloaded'
+    timeout: 60000,
+    waitUntil: 'networkidle2'
   });
 
   const handleCapture = async () => {
@@ -157,9 +157,9 @@ export default function AutoCaptureZipPage() {
                   <Input
                     type="number"
                     value={options.maxLinks}
-                    onChange={(e) => setOptions(prev => ({ ...prev, maxLinks: parseInt(e.target.value) || 10 }))}
+                    onChange={(e) => setOptions(prev => ({ ...prev, maxLinks: parseInt(e.target.value) || 5 }))}
                     min="1"
-                    max="50"
+                    max="20"
                     className="bg-gray-900/50 border-gray-600 text-white"
                     disabled={loading}
                   />
@@ -170,10 +170,10 @@ export default function AutoCaptureZipPage() {
                   <Input
                     type="number"
                     value={options.timeout}
-                    onChange={(e) => setOptions(prev => ({ ...prev, timeout: parseInt(e.target.value) || 30000 }))}
-                    min="5000"
-                    max="60000"
-                    step="5000"
+                    onChange={(e) => setOptions(prev => ({ ...prev, timeout: parseInt(e.target.value) || 60000 }))}
+                    min="30000"
+                    max="120000"
+                    step="10000"
                     className="bg-gray-900/50 border-gray-600 text-white"
                     disabled={loading}
                   />
@@ -189,9 +189,9 @@ export default function AutoCaptureZipPage() {
                   className="w-full p-2 rounded-md bg-gray-900/50 border border-gray-600 text-white focus:border-blue-500"
                   disabled={loading}
                 >
-                  <option value="domcontentloaded">DOM 로딩 완료 (빠름)</option>
+                  <option value="networkidle2">네트워크 거의 대기 (추천)</option>
                   <option value="networkidle0">네트워크 완전 대기 (정확함)</option>
-                  <option value="networkidle2">네트워크 거의 대기 (균형)</option>
+                  <option value="domcontentloaded">DOM 로딩 완료 (빠름)</option>
                 </select>
               </div>
 

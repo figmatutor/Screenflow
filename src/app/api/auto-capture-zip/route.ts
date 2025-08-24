@@ -19,18 +19,13 @@ interface CaptureResult {
 }
 
 export async function POST(req: NextRequest) {
-  if (req.method !== 'POST') {
-    return NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
-  }
-
   try {
     const { url, options = {} }: { url: string; options?: CaptureOptions } = await req.json();
     
     const {
-      maxLinks = 10,
-      maxDepth = 1,
-      timeout = 30000,
-      waitUntil = 'domcontentloaded'
+      maxLinks = 5,
+      timeout = 60000, // 더 긴 타임아웃
+      waitUntil = 'networkidle2' // 더 안정적인 로딩 대기
     } = options;
 
     if (!url) {
@@ -45,24 +40,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '유효하지 않은 URL 형식입니다.' }, { status: 400 });
     }
 
-    console.log(`[Auto Capture ZIP] 시작: ${url} (maxLinks: ${maxLinks}, maxDepth: ${maxDepth})`);
+    console.log(`[Auto Capture ZIP] 시작: ${url} (maxLinks: ${maxLinks})`);
 
     // 1. Puppeteer 브라우저 실행
     const browser = await launchBrowser();
     
     try {
-      // 2. 메인 페이지에서 내부 링크 수집
-      const page = await browser.newPage();
-      await page.goto(url, { waitUntil, timeout });
+      // 2. 링크 수집을 위한 초기 페이지 생성
+      const initialPage = await browser.newPage();
+      await initialPage.goto(url, { waitUntil, timeout });
+      await autoScroll(initialPage); // 전체 콘텐츠 로딩
 
-      console.log(`[Auto Capture ZIP] 메인 페이지 로드 완료: ${url}`);
+      console.log(`[Auto Capture ZIP] 메인 페이지 로드 및 스크롤 완료: ${url}`);
 
-      // 하이퍼링크 수집 및 필터링
-      const links = await page.$$eval('a[href]', anchors =>
-        anchors.map(a => a.href).filter(href => href && href.startsWith('http'))
+      // 하이퍼링크 수집 및 필터링 (동일 도메인만)
+      const links = await initialPage.$$eval('a[href^="http"]', anchors =>
+        anchors.map(a => a.href)
       );
 
-      // 동일 도메인 내부 링크만 필터링
       const internalLinks = Array.from(new Set(links))
         .filter(link => {
           try {
@@ -71,27 +66,77 @@ export async function POST(req: NextRequest) {
           } catch {
             return false;
           }
-        })
-        .slice(0, maxLinks);
+        });
+
+      await initialPage.close();
 
       console.log(`[Auto Capture ZIP] 내부 링크 수집 완료: ${internalLinks.length}개`);
       internalLinks.forEach((link, i) => console.log(`  ${i + 1}. ${link}`));
 
-      await page.close();
-
-      // 3. 각 링크별 스크린샷 캡처
+      // 3. 각 링크별 스크린샷 캡처 (BFS 방식)
       const zip = new JSZip();
+      const visited = new Set<string>();
       const screenshots: CaptureResult[] = [];
-      
-      // 메인 페이지 캡처
-      await capturePageScreenshot(browser, url, 'homepage', zip, screenshots, timeout, waitUntil);
+      const pagesToVisit = [{ url, index: 0 }];
+      let count = 0;
 
-      // 내부 링크들 캡처
-      for (const [index, link] of internalLinks.entries()) {
-        if (link === url) continue; // 메인 페이지는 이미 캡처함
+      // 메인 페이지부터 시작해서 연관 링크들을 순회하며 캡처
+      while (pagesToVisit.length > 0 && count < maxLinks) {
+        const { url: targetUrl, index } = pagesToVisit.shift()!;
         
-        const filename = `page-${String(index + 2).padStart(2, '0')}`;
-        await capturePageScreenshot(browser, link, filename, zip, screenshots, timeout, waitUntil);
+        if (visited.has(targetUrl)) continue;
+        visited.add(targetUrl);
+
+        console.log(`[Auto Capture ZIP] 캡처 시작 (${count + 1}/${maxLinks}): ${targetUrl}`);
+
+        const newPage = await browser.newPage();
+        try {
+          await newPage.goto(targetUrl, { waitUntil, timeout });
+          await autoScroll(newPage); // 전체 콘텐츠 로딩
+
+          // 전체 페이지 스크린샷 촬영
+          const screenshotBuffer = await newPage.screenshot({ 
+            fullPage: true,
+            type: 'png'
+          });
+          
+          const filename = `screenshot_${count + 1}.png`;
+          zip.file(filename, screenshotBuffer);
+          
+          screenshots.push({
+            url: targetUrl,
+            filename,
+            success: true
+          });
+
+          console.log(`[Auto Capture ZIP] 캡처 성공: ${targetUrl} → ${filename}`);
+
+          // 현재 페이지에서 추가 링크 수집 (depth 확장)
+          const pageLinks = await newPage.$$eval('a[href^="http"]', anchors =>
+            anchors.map(a => a.href)
+          );
+
+          pageLinks.forEach((link, i) => {
+            if (!visited.has(link) && 
+                new URL(link).hostname === baseUrl.hostname && 
+                !pagesToVisit.some(p => p.url === link)) {
+              pagesToVisit.push({ url: link, index: count + i + 1 });
+            }
+          });
+
+          count++;
+        } catch (error: any) {
+          console.error(`[Auto Capture ZIP] 캡처 실패: ${targetUrl}`, error.message);
+          screenshots.push({
+            url: targetUrl,
+            filename: `screenshot_${count + 1}.png`,
+            success: false,
+            error: error.message
+          });
+          count++;
+        } finally {
+          await newPage.close();
+        }
       }
 
       await browser.close();
@@ -200,61 +245,24 @@ async function launchBrowser() {
   }
 }
 
-// 개별 페이지 스크린샷 캡처
-async function capturePageScreenshot(
-  browser: any,
-  url: string,
-  filename: string,
-  zip: JSZip,
-  screenshots: CaptureResult[],
-  timeout: number,
-  waitUntil: 'domcontentloaded' | 'networkidle0' | 'networkidle2'
-) {
-  const page = await browser.newPage();
-  
-  try {
-    console.log(`[Auto Capture ZIP] 캡처 시작: ${url}`);
-    
-    // 페이지 오류 이벤트 리스너
-    page.on('pageerror', (error: Error) => {
-      console.warn(`[Auto Capture ZIP] 페이지 오류 (${url}):`, error.message);
-    });
+// 자동 스크롤 함수: lazy-load 이미지 포함하여 전체 콘텐츠 로딩
+async function autoScroll(page: any) {
+  await page.evaluate(async () => {
+    await new Promise<void>((resolve) => {
+      let totalHeight = 0;
+      const distance = 100;
+      const timer = setInterval(() => {
+        const scrollHeight = document.body.scrollHeight;
+        window.scrollBy(0, distance);
+        totalHeight += distance;
 
-    page.on('requestfailed', (request: any) => {
-      console.warn(`[Auto Capture ZIP] 요청 실패 (${url}):`, request.url(), request.failure()?.errorText);
+        if (totalHeight >= scrollHeight - window.innerHeight) {
+          clearInterval(timer);
+          resolve();
+        }
+      }, 100);
     });
-
-    await page.goto(url, { waitUntil, timeout });
-    
-    // 전체 페이지 스크린샷 촬영
-    const screenshotBuffer = await page.screenshot({ 
-      fullPage: true,
-      type: 'png'
-    });
-    
-    const filenameWithExt = `${filename}.png`;
-    zip.file(filenameWithExt, screenshotBuffer);
-    
-    screenshots.push({
-      url,
-      filename: filenameWithExt,
-      success: true
-    });
-    
-    console.log(`[Auto Capture ZIP] 캡처 성공: ${url} → ${filenameWithExt}`);
-
-  } catch (error: any) {
-    console.error(`[Auto Capture ZIP] 캡처 실패: ${url}`, error.message);
-    
-    screenshots.push({
-      url,
-      filename: `${filename}.png`,
-      success: false,
-      error: error.message
-    });
-  } finally {
-    await page.close();
-  }
+  });
 }
 
 export async function OPTIONS() {
