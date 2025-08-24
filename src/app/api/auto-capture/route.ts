@@ -32,7 +32,9 @@ export async function POST(request: NextRequest) {
     });
     
       // 비동기로 자동 캡처 실행 (실제 Puppeteer 크롤링 v3.0)
-  startRealPuppeteerCrawling(url, sessionId, options);
+  startRealPuppeteerCrawling(url, sessionId, options).catch(error => {
+    console.error(`[Auto Capture API] 백그라운드 캡처 실패: ${sessionId}`, error);
+  });
     
     const responseData = {
       sessionId,
@@ -240,7 +242,17 @@ async function startRealPuppeteerCrawling(url: string, sessionId: string, option
       finishedAt: new Date()
     };
 
+    console.log(`[Real Auto Capture API] 세션 상태 업데이트 시작: ${sessionId} → completed`);
     await captureStore.set(sessionId, captureInfo);
+    console.log(`[Real Auto Capture API] 세션 상태 업데이트 완료: ${sessionId}`);
+    
+    // 검증: 저장된 데이터 확인
+    const verification = await captureStore.get(sessionId);
+    console.log(`[Real Auto Capture API] 저장 검증: ${sessionId}`, {
+      status: verification?.status,
+      resultExists: !!verification?.result,
+      totalPages: verification?.result?.totalPages
+    });
 
   } catch (error) {
     console.error(`[Real Auto Capture API] 실제 캡처 실패: ${sessionId}`, error);

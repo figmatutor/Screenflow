@@ -208,10 +208,20 @@ export class AutoCaptureCrawler {
       });
       console.log(`[AutoCaptureCrawler] viewport 설정 완료`);
       
-      // 페이지 로드
+      // 페이지 로드 (더 관대한 설정)
       console.log(`[AutoCaptureCrawler] 페이지 로드 시작: ${url}`);
+      
+      // 페이지 오류 이벤트 리스너 추가
+      page.on('pageerror', (error) => {
+        console.error(`[AutoCaptureCrawler] 페이지 오류 (${url}):`, error.message);
+      });
+      
+      page.on('requestfailed', (request) => {
+        console.warn(`[AutoCaptureCrawler] 요청 실패 (${url}):`, request.url(), request.failure()?.errorText);
+      });
+      
       await page.goto(url, { 
-        waitUntil: 'networkidle2', 
+        waitUntil: 'domcontentloaded', // networkidle2보다 더 관대한 설정
         timeout: this.timeout 
       });
       console.log(`[AutoCaptureCrawler] 페이지 로드 완료: ${url}`);

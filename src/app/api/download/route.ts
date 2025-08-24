@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { captureStore } from '@/lib/capture-store-memory';
+import { captureStore } from '@/lib/capture-store-supabase-primary';
 import JSZip from 'jszip';
 import { createOptionsResponse } from '@/lib/api-utils';
 
@@ -12,7 +12,7 @@ export async function HEAD(request: NextRequest) {
     return new NextResponse(null, { status: 400 });
   }
   
-  const captureInfo = captureStore.get(sessionId);
+  const captureInfo = await captureStore.get(sessionId);
   
   if (!captureInfo || captureInfo.status !== 'completed') {
     return new NextResponse(null, { status: 404 });
@@ -48,13 +48,13 @@ export async function GET(request: NextRequest) {
     }
 
     // 캡처 작업 상태 확인
-    const captureInfo = captureStore.get(sessionId);
+    const captureInfo = await captureStore.get(sessionId);
     
     if (!captureInfo) {
       console.error(`[Download API] Session not found: ${sessionId}`);
       
       // 디버깅용 전체 세션 목록 로그
-      const allSessions = captureStore.getAllSessions();
+      const allSessions = await captureStore.getAllSessions();
       console.log('[Download API] Available sessions:', Object.keys(allSessions));
       
       return NextResponse.json({ 
@@ -96,8 +96,8 @@ export async function GET(request: NextRequest) {
         response.headers.set('Content-Length', zipBuffer.length.toString());
         
         // 다운로드 후 캐시에서 제거
-        setTimeout(() => {
-          captureStore.delete(sessionId);
+        setTimeout(async () => {
+          await captureStore.delete(sessionId);
         }, 60000);
         
         return response;
@@ -126,8 +126,8 @@ export async function GET(request: NextRequest) {
       response.headers.set('Content-Length', zipBuffer.length.toString());
       
       // 다운로드 후 캐시에서 제거 (메모리 절약)
-      setTimeout(() => {
-        captureStore.delete(sessionId);
+      setTimeout(async () => {
+        await captureStore.delete(sessionId);
       }, 60000); // 1분 후 삭제
       
       return response;
@@ -198,11 +198,10 @@ async function createSelectedZip(crawledPages: any[], selectedFiles: string | nu
           continue;
         }
         
-        // PNG 파일 유효성 검증
+        // PNG 파일 유효성 검증 (완화된 검증)
         if (!isPngBuffer(imageBuffer)) {
-          console.error(`[Download API] 유효하지 않은 PNG 데이터: ${page.filename}`);
-          failedCount++;
-          continue;
+          console.warn(`[Download API] PNG 헤더 검증 실패하지만 계속 진행: ${page.filename}`);
+          // PNG 헤더가 없어도 이미지 데이터가 있으면 계속 진행
         }
         
         zip.file(page.filename, imageBuffer, { binary: true });

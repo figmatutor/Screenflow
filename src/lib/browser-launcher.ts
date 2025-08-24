@@ -29,7 +29,7 @@ export class BrowserLauncher {
         const executablePath = await chromium.executablePath();
         console.log(`[BrowserLauncher] Executable path: ${executablePath}`);
         
-        return await puppeteer.launch({
+        const browser = await puppeteer.launch({
           args: [
             ...chromium.args,
             '--hide-scrollbars',
@@ -47,12 +47,18 @@ export class BrowserLauncher {
             '--disable-renderer-backgrounding',
             '--disable-backgrounding-occluded-windows',
             '--disable-features=TranslateUI',
-            '--disable-ipc-flooding-protection'
+            '--disable-ipc-flooding-protection',
+            '--single-process', // Vercel에서 안정성 향상
+            '--disable-features=VizDisplayCompositor'
           ],
-          defaultViewport: { width: 800, height: 600 }, // 더 작은 viewport
+          defaultViewport: { width: 800, height: 600 },
           executablePath,
-          headless: true, // headless 모드
+          headless: true,
+          timeout: 30000 // 30초 타임아웃
         });
+        
+        console.log(`[BrowserLauncher] Serverless 브라우저 초기화 성공`);
+        return browser;
       } else {
         // 로컬 환경에서는 시스템 Chrome 사용
         console.log(`[BrowserLauncher] 로컬 환경 감지 - 시스템 Chrome 사용`);
