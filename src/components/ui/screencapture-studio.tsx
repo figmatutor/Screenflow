@@ -489,12 +489,7 @@ export function ScreencaptureStudio() {
     return (
         <BeamsBackground 
             intensity="subtle" 
-            className="min-h-screen bg-black"
-            style={{
-                willChange: 'transform',
-                backfaceVisibility: 'hidden',
-                perspective: 1000
-            }}
+            className="min-h-screen bg-black transform-gpu"
         >
             <div className="min-h-screen flex flex-col w-full items-center justify-center text-white p-6 relative optimize-scroll">
             {/* 배경 효과 - BeamsBackground와 조화롭게 조정 */}
