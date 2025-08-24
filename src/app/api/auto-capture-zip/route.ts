@@ -9,6 +9,9 @@ interface CaptureOptions {
   maxDepth?: number;
   timeout?: number;
   waitUntil?: 'domcontentloaded' | 'networkidle0' | 'networkidle2';
+  captureFlow?: boolean; // 버튼 클릭 플로우 캡처 활성화
+  flowKeywords?: string[]; // 클릭할 버튼 텍스트 키워드
+  maxFlowSteps?: number; // 최대 플로우 단계 수
 }
 
 interface CaptureResult {
@@ -25,7 +28,10 @@ export async function POST(req: NextRequest) {
     const {
       maxLinks = 5,
       timeout = 60000, // 더 긴 타임아웃
-      waitUntil = 'networkidle2' // 더 안정적인 로딩 대기
+      waitUntil = 'networkidle2', // 더 안정적인 로딩 대기
+      captureFlow = false, // 플로우 캡처 비활성화가 기본값
+      flowKeywords = ['다음', '시작', 'Next', 'Start', '계속', 'Continue'], // 기본 키워드
+      maxFlowSteps = 5 // 최대 5단계까지
     } = options;
 
     if (!url) {
@@ -111,18 +117,25 @@ export async function POST(req: NextRequest) {
 
           console.log(`[Auto Capture ZIP] 캡처 성공: ${targetUrl} → ${filename}`);
 
-          // 현재 페이지에서 추가 링크 수집 (depth 확장)
-          const pageLinks = await newPage.$$eval('a[href^="http"]', anchors =>
-            anchors.map(a => a.href)
-          );
+          // 플로우 캡처가 활성화된 경우 버튼 클릭 시퀀스 실행
+          if (captureFlow) {
+            await captureButtonFlow(newPage, zip, screenshots, flowKeywords, maxFlowSteps, targetUrl, count, timeout, waitUntil);
+          }
 
-          pageLinks.forEach((link, i) => {
-            if (!visited.has(link) && 
-                new URL(link).hostname === baseUrl.hostname && 
-                !pagesToVisit.some(p => p.url === link)) {
-              pagesToVisit.push({ url: link, index: count + i + 1 });
-            }
-          });
+          // 현재 페이지에서 추가 링크 수집 (depth 확장) - 플로우 캡처가 아닌 경우에만
+          if (!captureFlow) {
+            const pageLinks = await newPage.$$eval('a[href^="http"]', anchors =>
+              anchors.map(a => a.href)
+            );
+
+            pageLinks.forEach((link, i) => {
+              if (!visited.has(link) && 
+                  new URL(link).hostname === baseUrl.hostname && 
+                  !pagesToVisit.some(p => p.url === link)) {
+                pagesToVisit.push({ url: link, index: count + i + 1 });
+              }
+            });
+          }
 
           count++;
         } catch (error: any) {
@@ -188,9 +201,9 @@ async function launchBrowser() {
     
     return await puppeteer.launch({
       args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
+      defaultViewport: { width: 1280, height: 720 },
       executablePath: await chromium.executablePath(),
-      headless: chromium.headless,
+      headless: true,
       timeout: 30000
     });
   } else {
@@ -243,6 +256,121 @@ async function launchBrowser() {
       timeout: 30000
     });
   }
+}
+
+// 버튼 클릭 플로우 캡처 함수
+async function captureButtonFlow(
+  page: any,
+  zip: JSZip,
+  screenshots: CaptureResult[],
+  flowKeywords: string[],
+  maxFlowSteps: number,
+  baseUrl: string,
+  baseCount: number,
+  timeout: number,
+  waitUntil: 'domcontentloaded' | 'networkidle0' | 'networkidle2'
+) {
+  let flowStep = 1;
+  
+  console.log(`[Flow Capture] 플로우 캡처 시작: ${baseUrl}`);
+  
+  while (flowStep <= maxFlowSteps) {
+    try {
+      console.log(`[Flow Capture] 플로우 단계 ${flowStep}: 버튼 탐색 중...`);
+      
+      // 페이지의 모든 버튼과 클릭 가능한 요소들 탐색
+      const clickableElements = await page.$$('button, a, input[type="button"], input[type="submit"], [role="button"], .btn, .button');
+      
+      let foundElement = null;
+      let elementText = '';
+      
+      // 키워드가 포함된 버튼 찾기
+      for (const element of clickableElements) {
+        try {
+          const text = await page.evaluate((el: any) => {
+            return el.innerText || el.textContent || el.value || el.alt || '';
+          }, element);
+          
+          // 키워드 매칭 확인
+          const hasKeyword = flowKeywords.some(keyword => 
+            text.toLowerCase().includes(keyword.toLowerCase())
+          );
+          
+          if (hasKeyword) {
+            foundElement = element;
+            elementText = text.trim();
+            console.log(`[Flow Capture] 플로우 단계 ${flowStep}: 클릭 대상 발견 - "${elementText}"`);
+            break;
+          }
+        } catch (err) {
+          // 요소 평가 실패 시 다음 요소로 계속
+          continue;
+        }
+      }
+      
+      if (!foundElement) {
+        console.log(`[Flow Capture] 플로우 단계 ${flowStep}: 클릭 가능한 버튼을 찾을 수 없습니다. 플로우 종료.`);
+        break;
+      }
+      
+      // 현재 URL 저장 (변경 감지용)
+      const currentUrl = page.url();
+      
+      // 버튼 클릭 실행
+      try {
+        await foundElement.click();
+        console.log(`[Flow Capture] 플로우 단계 ${flowStep}: 버튼 클릭 완료 - "${elementText}"`);
+        
+        // 네비게이션 또는 페이지 변화 대기
+        try {
+          await Promise.race([
+            page.waitForNavigation({ waitUntil, timeout: 15000 }),
+            page.waitForTimeout(2000) // 최소 2초 대기
+          ]);
+        } catch (navError) {
+          console.log(`[Flow Capture] 플로우 단계 ${flowStep}: 네비게이션 타임아웃, 페이지 변화 확인 중...`);
+        }
+        
+        // URL 변경 확인
+        const newUrl = page.url();
+        if (newUrl !== currentUrl) {
+          console.log(`[Flow Capture] 플로우 단계 ${flowStep}: URL 변경 감지 - ${newUrl}`);
+        }
+        
+        // 페이지 스크롤 및 로딩 완료 대기
+        await autoScroll(page);
+        
+        // 플로우 단계 스크린샷 촬영
+        const flowScreenshot = await page.screenshot({ 
+          fullPage: true,
+          type: 'png'
+        });
+        
+        const flowFilename = `flow_step_${flowStep}_${elementText.replace(/[^a-zA-Z0-9가-힣]/g, '_')}.png`;
+        zip.file(flowFilename, flowScreenshot);
+        
+        screenshots.push({
+          url: newUrl,
+          filename: flowFilename,
+          success: true
+        });
+        
+        console.log(`[Flow Capture] 플로우 단계 ${flowStep}: 스크린샷 캡처 완료 - ${flowFilename}`);
+        
+      } catch (clickError: any) {
+        console.error(`[Flow Capture] 플로우 단계 ${flowStep}: 클릭 실패`, clickError.message);
+        break;
+      }
+      
+      flowStep++;
+      
+    } catch (error: any) {
+      console.error(`[Flow Capture] 플로우 단계 ${flowStep}: 오류 발생`, error.message);
+      break;
+    }
+  }
+  
+  console.log(`[Flow Capture] 플로우 캡처 완료: 총 ${flowStep - 1}단계 캡처됨`);
 }
 
 // 자동 스크롤 함수: lazy-load 이미지 포함하여 전체 콘텐츠 로딩

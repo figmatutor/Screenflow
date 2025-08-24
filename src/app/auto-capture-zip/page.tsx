@@ -14,6 +14,9 @@ interface CaptureOptions {
   maxDepth: number;
   timeout: number;
   waitUntil: 'domcontentloaded' | 'networkidle0' | 'networkidle2';
+  captureFlow: boolean;
+  flowKeywords: string[];
+  maxFlowSteps: number;
 }
 
 export default function AutoCaptureZipPage() {
@@ -27,7 +30,10 @@ export default function AutoCaptureZipPage() {
     maxLinks: 5,
     maxDepth: 1,
     timeout: 60000,
-    waitUntil: 'networkidle2'
+    waitUntil: 'networkidle2',
+    captureFlow: false,
+    flowKeywords: ['다음', '시작', 'Next', 'Start', '계속', 'Continue'],
+    maxFlowSteps: 5
   });
 
   const handleCapture = async () => {
@@ -61,7 +67,10 @@ export default function AutoCaptureZipPage() {
       });
 
       setProgress(30);
-      setStatus('내부 링크를 수집하고 있습니다...');
+      setStatus(options.captureFlow 
+        ? '페이지를 로드하고 버튼 클릭 플로우를 시작합니다...' 
+        : '내부 링크를 수집하고 있습니다...'
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -69,7 +78,10 @@ export default function AutoCaptureZipPage() {
       }
 
       setProgress(70);
-      setStatus('스크린샷을 캡처하고 ZIP 파일을 생성하고 있습니다...');
+      setStatus(options.captureFlow 
+        ? '버튼 클릭 플로우를 실행하고 각 단계를 캡처하고 있습니다...' 
+        : '스크린샷을 캡처하고 ZIP 파일을 생성하고 있습니다...'
+      );
 
       // ZIP 파일 다운로드
       const blob = await response.blob();
@@ -119,7 +131,7 @@ export default function AutoCaptureZipPage() {
               </h1>
             </div>
             <p className="text-gray-300 text-lg">
-              웹사이트의 모든 내부 링크를 자동으로 탐색하여 스크린샷을 촬영하고 ZIP 파일로 다운로드합니다
+              웹사이트의 내부 링크를 탐색하거나 버튼 클릭 플로우를 따라가며 스크린샷을 촬영하고 ZIP 파일로 다운로드합니다
             </p>
           </div>
 
@@ -195,6 +207,63 @@ export default function AutoCaptureZipPage() {
                 </select>
               </div>
 
+              <Separator className="bg-gray-600" />
+
+              {/* 플로우 캡처 설정 */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="captureFlow"
+                    checked={options.captureFlow}
+                    onChange={(e) => setOptions(prev => ({ ...prev, captureFlow: e.target.checked }))}
+                    className="w-4 h-4 text-blue-600 bg-gray-900 border-gray-600 rounded focus:ring-blue-500"
+                    disabled={loading}
+                  />
+                  <label htmlFor="captureFlow" className="text-sm font-medium text-gray-200">
+                    🔄 플로우 캡처 모드 (버튼 클릭 시퀀스)
+                  </label>
+                </div>
+                
+                {options.captureFlow && (
+                  <div className="ml-7 space-y-3 p-3 bg-gray-900/30 rounded-md border border-gray-700">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-300">최대 플로우 단계</label>
+                        <Input
+                          type="number"
+                          value={options.maxFlowSteps}
+                          onChange={(e) => setOptions(prev => ({ ...prev, maxFlowSteps: parseInt(e.target.value) || 5 }))}
+                          min="1"
+                          max="10"
+                          className="bg-gray-800/50 border-gray-600 text-white text-sm"
+                          disabled={loading}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-300">클릭 키워드</label>
+                        <Input
+                          type="text"
+                          value={options.flowKeywords.join(', ')}
+                          onChange={(e) => setOptions(prev => ({ 
+                            ...prev, 
+                            flowKeywords: e.target.value.split(',').map(k => k.trim()).filter(k => k) 
+                          }))}
+                          placeholder="다음, 시작, Next, Start"
+                          className="bg-gray-800/50 border-gray-600 text-white text-sm"
+                          disabled={loading}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="text-xs text-gray-400">
+                      💡 플로우 모드에서는 입력한 키워드가 포함된 버튼을 순차적으로 클릭하며 각 단계의 스크린샷을 촬영합니다.
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* 진행 상태 */}
               {loading && (
                 <div className="space-y-3">
@@ -244,12 +313,20 @@ export default function AutoCaptureZipPage() {
           </Card>
 
           {/* 정보 카드 */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-8">
             <Card className="bg-gray-800/30 border-gray-700">
               <CardContent className="p-4 text-center">
                 <Globe className="w-8 h-8 text-blue-400 mx-auto mb-2" />
                 <h3 className="text-white font-semibold mb-1">내부 링크 탐색</h3>
                 <p className="text-gray-400 text-sm">동일 도메인의 내부 링크만 자동 수집</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-gray-800/30 border-gray-700">
+              <CardContent className="p-4 text-center">
+                <Zap className="w-8 h-8 text-yellow-400 mx-auto mb-2" />
+                <h3 className="text-white font-semibold mb-1">플로우 캡처</h3>
+                <p className="text-gray-400 text-sm">버튼 클릭 시퀀스를 따라가며 자동 캡처</p>
               </CardContent>
             </Card>
             
@@ -282,14 +359,18 @@ export default function AutoCaptureZipPage() {
               </div>
               <div className="flex items-start gap-2">
                 <Badge variant="secondary" className="mt-0.5">2</Badge>
-                <p>최대 링크 수, 타임아웃, 로딩 조건 등의 옵션을 설정합니다</p>
+                <p>캡처 모드를 선택합니다: <strong>링크 탐색</strong> 또는 <strong>플로우 캡처</strong></p>
               </div>
               <div className="flex items-start gap-2">
                 <Badge variant="secondary" className="mt-0.5">3</Badge>
-                <p>"스크린샷 캡처 & ZIP 다운로드" 버튼을 클릭합니다</p>
+                <p>플로우 캡처 시 클릭할 버튼의 키워드를 설정합니다 (예: "다음", "시작")</p>
               </div>
               <div className="flex items-start gap-2">
                 <Badge variant="secondary" className="mt-0.5">4</Badge>
+                <p>"스크린샷 캡처 & ZIP 다운로드" 버튼을 클릭합니다</p>
+              </div>
+              <div className="flex items-start gap-2">
+                <Badge variant="secondary" className="mt-0.5">5</Badge>
                 <p>처리가 완료되면 ZIP 파일이 자동으로 다운로드됩니다</p>
               </div>
             </CardContent>
