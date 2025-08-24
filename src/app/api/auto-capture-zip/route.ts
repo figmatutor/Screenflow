@@ -51,28 +51,56 @@ export async function POST(req: NextRequest) {
     // 1. Puppeteer 브라우저 실행
     const browser = await launchBrowser();
     
+    let internalLinks: string[] = [];
+    
     try {
       // 2. 링크 수집을 위한 초기 페이지 생성
       const initialPage = await browser.newPage();
-      await initialPage.goto(url, { waitUntil, timeout });
-      await autoScroll(initialPage); // 전체 콘텐츠 로딩
+      
+      // Anti-detection 설정 적용
+      await setupAntiDetection(initialPage);
+      
+      console.log(`[Auto Capture ZIP] 메인 페이지 로드 시작: ${url}`);
+      
+      try {
+        await initialPage.goto(url, { waitUntil, timeout });
+        await autoScroll(initialPage); // 전체 콘텐츠 로딩
 
-      console.log(`[Auto Capture ZIP] 메인 페이지 로드 및 스크롤 완료: ${url}`);
+        console.log(`[Auto Capture ZIP] 메인 페이지 로드 및 스크롤 완료: ${url}`);
 
-      // 하이퍼링크 수집 및 필터링 (동일 도메인만)
-      const links = await initialPage.$$eval('a[href^="http"]', anchors =>
-        anchors.map(a => a.href)
-      );
-
-      const internalLinks = Array.from(new Set(links))
-        .filter(link => {
-          try {
-            const linkUrl = new URL(link);
-            return linkUrl.hostname === baseUrl.hostname;
-          } catch {
-            return false;
-          }
+        // 하이퍼링크 수집 및 필터링 (다양한 선택자 사용)
+        const links = await initialPage.evaluate(() => {
+          const anchors = Array.from(document.querySelectorAll('a[href]'));
+          return anchors
+            .map(a => (a as HTMLAnchorElement).href)
+            .filter(href => href && (href.startsWith('http://') || href.startsWith('https://')));
         });
+
+        console.log(`[Auto Capture ZIP] 추출된 전체 링크 수: ${links.length}`);
+        console.log(`[Auto Capture ZIP] 링크 샘플:`, links.slice(0, 5));
+
+        internalLinks = Array.from(new Set(links))
+          .filter(link => {
+            try {
+              const linkUrl = new URL(link);
+              const isInternal = linkUrl.hostname === baseUrl.hostname;
+              if (isInternal) {
+                console.log(`[Auto Capture ZIP] 내부 링크 발견: ${link}`);
+              }
+              return isInternal;
+            } catch (error) {
+              console.warn(`[Auto Capture ZIP] URL 파싱 실패: ${link}`);
+              return false;
+            }
+          });
+
+        console.log(`[Auto Capture ZIP] 필터링된 내부 링크 수: ${internalLinks.length}`);
+        
+      } catch (error: any) {
+        console.error(`[Auto Capture ZIP] 메인 페이지 로드 실패: ${error.message}`);
+        await initialPage.close();
+        throw error;
+      }
 
       await initialPage.close();
 
@@ -97,9 +125,27 @@ export async function POST(req: NextRequest) {
 
         const newPage = await browser.newPage();
         try {
+          // Anti-detection 설정 적용
+          await setupAntiDetection(newPage);
+          
+          // 페이지 오류 이벤트 리스너 추가
+          newPage.on('response', (response: any) => {
+            if (response.status() >= 400) {
+              console.warn(`[Auto Capture ZIP] HTTP 오류 (${targetUrl}): ${response.status()} ${response.statusText()}`);
+            }
+          });
+
+          newPage.on('requestfailed', (request: any) => {
+            console.warn(`[Auto Capture ZIP] 요청 실패 (${targetUrl}):`, request.url(), request.failure()?.errorText);
+          });
+
+          console.log(`[Auto Capture ZIP] 페이지 이동 중: ${targetUrl}`);
           await newPage.goto(targetUrl, { waitUntil, timeout });
+          
+          console.log(`[Auto Capture ZIP] 페이지 로드 완료, 스크롤 시작: ${targetUrl}`);
           await autoScroll(newPage); // 전체 콘텐츠 로딩
 
+          console.log(`[Auto Capture ZIP] 스크린샷 촬영 시작: ${targetUrl}`);
           // 전체 페이지 스크린샷 촬영
           const screenshotBuffer = await newPage.screenshot({ 
             fullPage: true,
@@ -115,7 +161,7 @@ export async function POST(req: NextRequest) {
             success: true
           });
 
-          console.log(`[Auto Capture ZIP] 캡처 성공: ${targetUrl} → ${filename}`);
+          console.log(`[Auto Capture ZIP] 캡처 성공 (${screenshotBuffer.length}바이트): ${targetUrl} → ${filename}`);
 
           // 플로우 캡처가 활성화된 경우 버튼 클릭 시퀀스 실행
           if (captureFlow) {
@@ -200,7 +246,16 @@ async function launchBrowser() {
     console.log(`[Auto Capture ZIP] Vercel 환경 - @sparticuz/chromium 사용`);
     
     return await puppeteer.launch({
-      args: chromium.args,
+      args: [
+        ...chromium.args,
+        // Bot detection 방지
+        '--disable-blink-features=AutomationControlled',
+        '--disable-web-security',
+        '--allow-running-insecure-content',
+        '--no-default-browser-check',
+        '--disable-extensions-file-access-check',
+        '--disable-features=TranslateUI'
+      ],
       defaultViewport: { width: 1280, height: 720 },
       executablePath: await chromium.executablePath(),
       headless: true,
@@ -249,12 +304,108 @@ async function launchBrowser() {
         '--no-zygote',
         '--disable-gpu',
         '--single-process',
-        '--disable-features=VizDisplayCompositor'
+        '--disable-features=VizDisplayCompositor',
+        // Bot detection 방지
+        '--disable-blink-features=AutomationControlled',
+        '--disable-web-security',
+        '--allow-running-insecure-content',
+        '--no-default-browser-check',
+        '--disable-extensions-file-access-check',
+        '--disable-features=TranslateUI'
       ],
       defaultViewport: { width: 1280, height: 720 },
       executablePath,
       timeout: 30000
     });
+  }
+}
+
+// 페이지 Bot Detection 방지 설정
+async function setupAntiDetection(page: any) {
+  try {
+    // User-Agent 설정 (실제 브라우저처럼)
+    await page.setUserAgent(
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    );
+
+    // HTTP 헤더 설정
+    await page.setExtraHTTPHeaders({
+      'Accept-Language': 'ko-KR,ko;q=0.9,en;q=0.8',
+      'Accept-Encoding': 'gzip, deflate, br',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache',
+      'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+      'Sec-Ch-Ua-Mobile': '?0',
+      'Sec-Ch-Ua-Platform': '"macOS"',
+      'Sec-Fetch-Dest': 'document',
+      'Sec-Fetch-Mode': 'navigate',
+      'Sec-Fetch-Site': 'none',
+      'Sec-Fetch-User': '?1',
+      'Upgrade-Insecure-Requests': '1'
+    });
+
+    // Automation 감지 방지
+    await page.evaluateOnNewDocument(() => {
+      // webdriver 속성 제거
+      Object.defineProperty(navigator, 'webdriver', {
+        get: () => undefined,
+      });
+
+      // Chrome runtime 정보 추가
+      Object.defineProperty(navigator, 'plugins', {
+        get: () => [
+          {
+            0: { type: "application/x-google-chrome-pdf", suffixes: "pdf", description: "Portable Document Format", enabledPlugin: Plugin },
+            description: "Portable Document Format",
+            filename: "internal-pdf-viewer",
+            length: 1,
+            name: "Chrome PDF Plugin"
+          }
+        ],
+      });
+
+      // Languages 설정
+      Object.defineProperty(navigator, 'languages', {
+        get: () => ['ko-KR', 'ko', 'en'],
+      });
+
+      // Permission API (타입 안전하게 수정)
+      try {
+        const originalQuery = window.navigator.permissions.query;
+        window.navigator.permissions.query = (parameters: any) => (
+          parameters.name === 'notifications' ?
+            Promise.resolve({ state: Notification.permission } as any) :
+            originalQuery(parameters)
+        );
+      } catch (e) {
+        // Permission API 수정 실패 시 무시
+      }
+    });
+
+    // Request Interception 설정 (불필요한 리소스 차단)
+    await page.setRequestInterception(true);
+    page.on('request', (request: any) => {
+      const resourceType = request.resourceType();
+      const url = request.url();
+
+      // 불필요한 리소스 차단 (성능 최적화)
+      if (resourceType === 'image' && !url.includes('logo') && !url.includes('icon')) {
+        request.abort();
+      } else if (resourceType === 'font') {
+        request.abort();
+      } else if (resourceType === 'media') {
+        request.abort();
+      } else if (resourceType === 'stylesheet' && url.includes('analytics')) {
+        request.abort();
+      } else {
+        request.continue();
+      }
+    });
+
+    console.log(`[Anti-Detection] 페이지 Bot Detection 방지 설정 완료`);
+  } catch (error: any) {
+    console.warn(`[Anti-Detection] 설정 중 오류 (계속 진행): ${error.message}`);
   }
 }
 
