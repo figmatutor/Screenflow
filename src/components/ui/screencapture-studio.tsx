@@ -568,7 +568,7 @@ export function ScreencaptureStudio() {
                                 <h2 className="text-[28px] md:text-[36px] lg:text-[44px] font-bold tracking-tight leading-[32px] md:leading-[40px] lg:leading-[48px] bg-clip-text text-transparent bg-gradient-to-r from-white via-white/90 to-white/40" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif', letterSpacing: '-1.2px' }}>
                                     레퍼런스 수집
                                 </h2>
-                                <h2 className="text-[28px] md:text-[36px] lg:text-[44px] font-bold tracking-tight leading-[32px] md:leading-[40px] lg:leading-[48px] text-white/80" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif', letterSpacing: '-0.9px' }}>
+                                <h2 className="text-[28px] md:text-[36px] lg:text-[44px] font-bold tracking-tight leading-[32px] md:leading-[40px] lg:leading-[48px] text-white/80 mt-1 md:mt-2" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif', letterSpacing: '-0.9px' }}>
                                     이제 링크 한 줄로 끝.
                                 </h2>
                                 <motion.div 
@@ -726,7 +726,7 @@ export function ScreencaptureStudio() {
                                 <h2 className="text-[28px] md:text-[36px] lg:text-[44px] font-bold tracking-tight leading-[32px] md:leading-[40px] lg:leading-[48px] text-white/80" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif', letterSpacing: '-0.9px' }}>
                                     번거로운 웹 레퍼런스 캡쳐
                                 </h2>
-                                <h2 className="text-[28px] md:text-[36px] lg:text-[44px] font-bold leading-[32px] md:leading-[40px] lg:leading-[48px] bg-clip-text text-transparent bg-gradient-to-r from-white via-white/90 to-white/40" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif', letterSpacing: '-0.9px' }}>
+                                <h2 className="text-[28px] md:text-[36px] lg:text-[44px] font-bold leading-[32px] md:leading-[40px] lg:leading-[48px] bg-clip-text text-transparent bg-gradient-to-r from-white via-white/90 to-white/40 mt-1 md:mt-2" style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif', letterSpacing: '-0.9px' }}>
                                     딱 3단계로 완성.
                                 </h2>
                                 <motion.div 
