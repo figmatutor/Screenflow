@@ -15,10 +15,44 @@
     -webkit-overflow-scrolling: touch;
   }
   
+  /* 헤더 고정 최적화 */
+  .header-fixed {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+    transform: translateZ(0);
+    will-change: transform, background-color, backdrop-filter;
+    backface-visibility: hidden;
+  }
+  
+  /* 스크롤 시 헤더 배경 변화 */
+  .header-scrolled {
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+  
+  .header-transparent {
+    background-color: transparent;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  
   /* 모바일 디바이스에서 패럴렉스 최적화 */
   @media (max-width: 768px) {
     .will-change-transform {
       will-change: auto;
+    }
+    
+    /* 모바일에서 헤더 최적화 */
+    .header-fixed {
+      -webkit-transform: translateZ(0);
+      transform: translateZ(0);
     }
     
     /* prefers-reduced-motion을 지원하는 브라우저에서 애니메이션 축소 */

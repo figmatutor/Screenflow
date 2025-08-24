@@ -247,6 +247,20 @@ export function ScreencaptureStudio() {
         delay: isMobile ? 0 : 0.15
     }), [isMobile, prefersReducedMotion]);
 
+    // 스크롤 상태 관리
+    const [isScrolled, setIsScrolled] = useState(false);
+
+    // 스크롤 이벤트 리스너
+    useEffect(() => {
+        const handleScroll = () => {
+            const scrollTop = window.scrollY;
+            setIsScrolled(scrollTop > 50);
+        };
+
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
     const [currentStep, setCurrentStep] = useState<'input' | 'crawling' | 'preview' | 'complete' | 'download'>('input');
     const [inputUrl, setInputUrl] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -508,9 +522,11 @@ export function ScreencaptureStudio() {
                 )}
             </div>
 
-            {/* 헤더 - Figma 스타일 적용 (배경 투명도 0%) */}
+            {/* 헤더 - 스크롤 상태에 따른 동적 스타일 적용 */}
             <motion.div 
-                className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-transparent border-b border-white/[0.05]"
+                className={`header-fixed transition-all duration-300 ease-out ${
+                    isScrolled ? 'header-scrolled' : 'header-transparent'
+                }`}
                 initial={{ y: -100 }}
                 animate={{ y: 0 }}
                 transition={{ duration: 0.6 }}
@@ -533,7 +549,7 @@ export function ScreencaptureStudio() {
                 </div>
             </motion.div>
 
-            <div className="w-full max-w-4xl mx-auto relative mt-[280px]">
+            <div className="w-full max-w-4xl mx-auto relative mt-[140px] md:mt-[280px]">
                 <motion.div 
                     className="relative z-10 space-y-12"
                     initial={{ opacity: 0, y: 20 }}
