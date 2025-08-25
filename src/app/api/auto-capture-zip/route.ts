@@ -138,6 +138,10 @@ export async function POST(req: NextRequest) {
           await setupAntiDetection(newPage);
           
           // 페이지 오류 이벤트 리스너 추가
+          newPage.on('pageerror', (error: any) => {
+            console.error(`[Auto Capture ZIP] 페이지 오류 (${targetUrl}):`, error.message);
+          });
+          
           newPage.on('response', (response: any) => {
             if (response.status() >= 400) {
               console.warn(`[Auto Capture ZIP] HTTP 오류 (${targetUrl}): ${response.status()} ${response.statusText()}`);
@@ -149,7 +153,10 @@ export async function POST(req: NextRequest) {
           });
 
           console.log(`[Auto Capture ZIP] 페이지 이동 중: ${targetUrl}`);
-          await newPage.goto(targetUrl, { waitUntil, timeout });
+          await newPage.goto(targetUrl, { 
+            waitUntil: 'domcontentloaded', // 더 안정적인 로딩 대기
+            timeout 
+          });
           
           console.log(`[Auto Capture ZIP] 페이지 로드 완료, 스크롤 시작: ${targetUrl}`);
           await autoScroll(newPage); // 전체 콘텐츠 로딩
