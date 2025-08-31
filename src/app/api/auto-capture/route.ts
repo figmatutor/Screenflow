@@ -4,19 +4,40 @@ import { AutoCaptureCrawler, CrawlOptions } from '@/lib/auto-capture-crawler';
 import { captureStore } from '@/lib/capture-store-supabase-primary';
 import { createSuccessResponse, createErrorResponse, createOptionsResponse, createServerErrorResponse } from '@/lib/api-utils';
 
+// URL 정규화 함수
+function normalizeUrl(inputUrl: string): string {
+  let normalizedUrl = inputUrl.trim();
+  
+  // 프로토콜이 없으면 https:// 추가
+  if (!normalizedUrl.startsWith('http://') && !normalizedUrl.startsWith('https://')) {
+    normalizedUrl = 'https://' + normalizedUrl;
+  }
+  
+  // URL 유효성 검사
+  try {
+    const urlObj = new URL(normalizedUrl);
+    return urlObj.toString();
+  } catch (error) {
+    throw new Error(`잘못된 URL 형식입니다: ${inputUrl}`);
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { url, options } = await request.json();
+    const { url: rawUrl, options } = await request.json();
     
-    if (!url) {
+    if (!rawUrl) {
       return createErrorResponse('URL is required');
     }
 
-    // URL 유효성 검사
+    // URL 정규화 및 유효성 검사
+    let url: string;
     try {
-      new URL(url);
-    } catch {
-      return createErrorResponse('Invalid URL format');
+      url = normalizeUrl(rawUrl);
+      console.log(`[Auto Capture] URL 정규화: ${rawUrl} → ${url}`);
+    } catch (error) {
+      console.error('[Auto Capture] URL 정규화 실패:', error);
+      return createErrorResponse(error instanceof Error ? error.message : 'Invalid URL format');
     }
 
     // 세션 ID 생성

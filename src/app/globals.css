@@ -21,10 +21,12 @@
     top: 0;
     left: 0;
     right: 0;
-    z-index: 9999;
+    z-index: 9999; /* 항상 가장 앞에 표시 */
+    width: 100%;
     transform: translateZ(0);
     will-change: transform, background-color, backdrop-filter;
     backface-visibility: hidden;
+    isolation: isolate; /* 새로운 스타킹 컨텍스트 생성 */
   }
   
   /* 스크롤 시 헤더 배경 변화 */
@@ -130,15 +132,147 @@
 @layer base {
   * {
     @apply border-border;
+    /* 웹뷰 안정성 강화 */
+    box-sizing: border-box;
   }
+  
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+  
+  html {
+    /* 웹뷰 스크롤 최적화 */
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    /* 폰트 크기 고정 (웹뷰 자동 조정 방지) */
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    /* 탭 하이라이트 제거 */
+    -webkit-tap-highlight-color: transparent;
+  }
+  
   body {
     @apply bg-background text-foreground;
+    /* 웹뷰 최적화 */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    /* 폰트 fallback 강화 */
+    font-synthesis: none;
+    /* 레이아웃 안정성 */
+    min-height: 100vh;
+    min-height: 100dvh; /* 동적 뷰포트 높이 지원 */
+    overflow-x: hidden;
+    /* 웹뷰 성능 최적화 */
+    transform: translateZ(0);
+    will-change: auto;
+  }
+  
+  /* 텍스트 선택 안정화 */
+  * {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+  
+  /* 입력 요소는 선택 가능하게 */
+  input, textarea, [contenteditable] {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+  }
+  
+  /* 텍스트 요소는 선택 가능하게 */
+  p, span, div[role="text"], [data-selectable="true"] {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+  }
+  
+  /* 고해상도 디스플레이 대응 */
+  @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    img {
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: optimize-contrast;
+    }
+  }
+  
+  /* WebView 최적화 */
+  img {
+    max-width: 100%;
+    height: auto;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+  
+  /* iOS Safari 최적화 */
+  @supports (-webkit-touch-callout: none) {
+    body {
+      /* iOS에서 폰트 크기 자동 조정 방지 */
+      -webkit-text-size-adjust: 100%;
+    }
+  }
+  
+  /* 웹뷰 레이아웃 안정성 강화 */
+  @media screen and (max-width: 768px) {
+    body {
+      /* 모바일 웹뷰에서 가로 스크롤 방지 */
+      overflow-x: hidden !important;
+      width: 100% !important;
+      max-width: 100vw !important;
+    }
+    
+    /* 플렉스박스 안정성 */
+    .flex, [class*="flex"] {
+      min-width: 0;
+      flex-shrink: 1;
+    }
+    
+    /* 그리드 안정성 */
+    .grid, [class*="grid"] {
+      min-width: 0;
+      overflow: hidden;
+    }
+  }
+  
+  /* 웹뷰 특화 최적화 */
+  @media screen and (hover: none) and (pointer: coarse) {
+    /* 터치 디바이스 최적화 */
+    button, [role="button"] {
+      min-height: 44px; /* 터치 타겟 최소 크기 */
+      min-width: 44px;
+    }
+    
+    /* 호버 효과 비활성화 */
+    .hover\:scale-110:hover {
+      transform: none !important;
+    }
+    
+    .hover\:bg-white\/10:hover {
+      background-color: rgba(255, 255, 255, 0.05) !important;
+    }
+  }
+  
+  /* 고해상도 디스플레이 최적화 강화 */
+  @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 2dppx) {
+    img, picture, svg {
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: optimize-contrast;
+      image-rendering: crisp-edges;
+    }
   }
 }
 
 .lab-bg::before {
   overflow: hidden;
-  max-width: 100vw;
+  max-width: 100%;
   max-height: 100vh;
   box-sizing: border-box;
 }

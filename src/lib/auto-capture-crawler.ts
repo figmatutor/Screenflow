@@ -1,5 +1,5 @@
 import { Browser, Page } from 'puppeteer-core';
-import { BrowserLauncher } from './browser-launcher';
+import { launchBrowser } from './browser-launcher';
 import sharp from 'sharp';
 
 export interface CrawledPage {
@@ -36,14 +36,14 @@ export interface CrawlResult {
 
 export class AutoCaptureCrawler {
   private browser: Browser | null = null;
-  private readonly timeout = 30000;
+  private readonly timeout = 60000; // 30초 → 60초로 증가
   private readonly defaultOptions: CrawlOptions = {
     maxDepth: 1,
     maxPages: 5, // 페이지 수 제한
-    viewportWidth: 800, // 더 작은 뷰포트
-    viewportHeight: 600,
-    thumbnailWidth: 200, // 더 작은 썸네일
-    thumbnailHeight: 150,
+    viewportWidth: 1440, // 1440px로 증가
+    viewportHeight: 900, // 비례적으로 증가
+    thumbnailWidth: 300, // 더 큰 썸네일
+    thumbnailHeight: 200,
     waitAfterLoad: 1000 // 더 짧은 대기시간
   };
 
@@ -51,7 +51,7 @@ export class AutoCaptureCrawler {
     console.log(`[AutoCaptureCrawler] 브라우저 초기화 시작`);
     
     try {
-      this.browser = await BrowserLauncher.launch();
+      this.browser = await launchBrowser();
       console.log(`[AutoCaptureCrawler] 브라우저 초기화 완료`);
     } catch (error) {
       console.error(`[AutoCaptureCrawler] 브라우저 초기화 실패:`, error);
@@ -239,10 +239,9 @@ export class AutoCaptureCrawler {
       // 전체 페이지 스크린샷 캡처 (최적화됨) v2.0
       console.log(`[AutoCaptureCrawler] 스크린샷 캡처 시작 v2.0 (${order}): ${url}`);
       const fullScreenshot = await page.screenshot({
-        fullPage: false, // viewport만 캡처 (더 빠름)
+        fullPage: true, // 전체 페이지 캡처
         type: 'png',
-        // PNG는 무손실 압축이므로 quality 옵션 완전 제거됨
-        clip: { x: 0, y: 0, width: 800, height: 600 } // 고정 크기
+        // clip 옵션 제거하여 실제 뷰포트 크기(1440x900) 사용
       }) as Buffer;
       console.log(`[AutoCaptureCrawler] 스크린샷 캡처 완료: ${fullScreenshot.length} bytes`);
       
@@ -308,7 +307,13 @@ export class AutoCaptureCrawler {
     const page = await this.browser!.newPage();
     
     try {
-      await page.goto(baseUrl, { waitUntil: 'networkidle2', timeout: this.timeout });
+      // 더 관대한 네트워크 로딩 전략
+      try {
+        await page.goto(baseUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+      } catch (error) {
+        console.log(`[AutoCaptureCrawler] 첫 번째 시도 실패, 재시도: ${error}`);
+        await page.goto(baseUrl, { waitUntil: 'load', timeout: 90000 });
+      }
       
       const baseUrlObj = new URL(baseUrl);
       

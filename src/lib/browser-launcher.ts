@@ -4,8 +4,7 @@ import chromium from '@sparticuz/chromium';
 /**
  * Vercel과 로컬 환경 모두에서 작동하는 브라우저 런처
  */
-export class BrowserLauncher {
-  static async launch(): Promise<Browser> {
+export async function launchBrowser(): Promise<Browser> {
     console.log(`[BrowserLauncher] 브라우저 초기화 시작`);
     
     try {
@@ -63,8 +62,47 @@ export class BrowserLauncher {
         // 로컬 환경에서는 시스템 Chrome 사용
         console.log(`[BrowserLauncher] 로컬 환경 감지 - 시스템 Chrome 사용`);
         
+        // 로컬 환경에서 Chrome 경로 자동 감지
+        let executablePath = process.env.CHROME_EXECUTABLE_PATH;
+        
+        if (!executablePath) {
+          // 운영체제별 Chrome 경로 감지
+          const os = require('os');
+          const fs = require('fs');
+          
+          const chromePaths = {
+            darwin: [
+              '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+              '/Applications/Chromium.app/Contents/MacOS/Chromium'
+            ],
+            linux: [
+              '/usr/bin/google-chrome-stable',
+              '/usr/bin/google-chrome',
+              '/usr/bin/chromium-browser',
+              '/usr/bin/chromium'
+            ],
+            win32: [
+              'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+              'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe'
+            ]
+          };
+          
+          const platform = os.platform();
+          const paths = chromePaths[platform] || [];
+          
+          for (const path of paths) {
+            if (fs.existsSync(path)) {
+              executablePath = path;
+              break;
+            }
+          }
+        }
+        
+        console.log(`[BrowserLauncher] Chrome 경로: ${executablePath}`);
+        
         return await puppeteer.launch({
           headless: true,
+          executablePath,
           args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
@@ -79,14 +117,11 @@ export class BrowserLauncher {
             '--disable-backgrounding-occluded-windows',
             '--disable-renderer-backgrounding'
           ],
-          defaultViewport: null,
-          // 로컬에서 시스템에 설치된 Chrome 사용
-          executablePath: process.env.CHROME_EXECUTABLE_PATH || undefined
+          defaultViewport: null
         });
       }
     } catch (error) {
       console.error(`[BrowserLauncher] 브라우저 초기화 실패:`, error);
       throw new Error(`브라우저 초기화 실패: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-  }
 }

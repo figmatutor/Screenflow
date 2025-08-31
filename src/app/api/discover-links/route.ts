@@ -1,119 +1,113 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { LinkDiscovery } from '@/lib/link-discovery';
-import { captureStore } from '@/lib/capture-store-memory';
-import { createSuccessResponse, createErrorResponse, createOptionsResponse, createServerErrorResponse } from '@/lib/api-utils';
+import { launchBrowser } from '@/lib/browser-launcher';
 
 export async function POST(request: NextRequest) {
   try {
-    const { url } = await request.json();
+    console.log('[Discover Links] API 호출 시작');
     
+    const body = await request.json();
+    const { url, maxLinks = 10 } = body;
+
     if (!url) {
-      return createErrorResponse('URL is required');
+      return NextResponse.json({ error: 'URL이 필요합니다.' }, { status: 400 });
     }
 
-    // URL 유효성 검사
-    try {
-      new URL(url);
-    } catch {
-      return createErrorResponse('Invalid URL format');
-    }
+    console.log(`[Discover Links] URL 분석 시작: ${url}, 최대 링크: ${maxLinks}`);
 
-    // 세션 ID 생성
-    const sessionId = `discover_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+    const browser = await launchBrowser();
+    const page = await browser.newPage();
+
+    // 기본 뷰포트 설정
+    await page.setViewport({ width: 1280, height: 720 });
+
+    // Bot Detection 방지 설정
+    await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
     
-    console.log(`[Discover API] 링크 발견 시작: ${url} (세션: ${sessionId})`);
-    
-    // 백그라운드에서 링크 발견 작업 시작
-    captureStore.set(sessionId, { 
-      status: 'processing',
-      createdAt: new Date()
+    // 페이지 이동
+    console.log(`[Discover Links] 페이지 로딩: ${url}`);
+    await page.goto(url, { 
+      waitUntil: 'domcontentloaded',
+      timeout: 30000 
     });
-    
-    // 비동기로 링크 발견 실행
-    startLinkDiscovery(url, sessionId);
-    
-    const responseData = {
-      sessionId,
-      baseUrl: url,
-      status: 'processing',
-      estimatedTime: 15000, // 15초 예상
-      message: '페이지를 분석하고 링크를 수집하고 있습니다...'
-    };
 
-    return createSuccessResponse(responseData);
-    
+    // 기본 도메인 추출
+    const baseUrl = new URL(url);
+    const baseDomain = baseUrl.hostname;
+
+    console.log(`[Discover Links] 기본 도메인: ${baseDomain}`);
+
+    // 내부 링크 수집
+    const links = await page.evaluate((domain, currentUrl) => {
+      const anchors = Array.from(document.querySelectorAll('a[href]'));
+      const uniqueLinks = new Set();
+      
+      anchors.forEach(anchor => {
+        const href = anchor.getAttribute('href');
+        if (!href) return;
+
+        let fullUrl;
+        try {
+          // 상대 URL 처리
+          if (href.startsWith('/')) {
+            fullUrl = new URL(href, currentUrl).toString();
+          } else if (href.startsWith('http')) {
+            fullUrl = href;
+          } else {
+            fullUrl = new URL(href, currentUrl).toString();
+          }
+
+          const linkUrl = new URL(fullUrl);
+          
+          // 같은 도메인의 링크만 포함
+          if (linkUrl.hostname === domain) {
+            // URL 정규화 (query params와 hash 제거)
+            const normalizedUrl = `${linkUrl.protocol}//${linkUrl.hostname}${linkUrl.pathname}`;
+            uniqueLinks.add(normalizedUrl);
+          }
+        } catch (e) {
+          // 잘못된 URL 무시
+        }
+      });
+
+      return Array.from(uniqueLinks);
+    }, baseDomain, url);
+
+    await browser.close();
+
+    // 메인 URL이 포함되지 않았다면 첫 번째에 추가
+    const normalizedMainUrl = `${baseUrl.protocol}//${baseUrl.hostname}${baseUrl.pathname}`;
+    const finalLinks = [normalizedMainUrl, ...links.filter(link => link !== normalizedMainUrl)]
+      .slice(0, maxLinks);
+
+    console.log(`[Discover Links] 발견된 링크 수: ${finalLinks.length}`);
+    finalLinks.forEach((link, index) => {
+      console.log(`[Discover Links] ${index + 1}. ${link}`);
+    });
+
+    return NextResponse.json({
+      success: true,
+      mainUrl: normalizedMainUrl,
+      links: finalLinks,
+      total: finalLinks.length,
+      baseDomain
+    });
+
   } catch (error) {
-    console.error('[Discover API] error:', error);
-    return createServerErrorResponse();
+    console.error('[Discover Links] 오류:', error);
+    return NextResponse.json({
+      error: '링크 수집 중 오류가 발생했습니다.',
+      details: error instanceof Error ? error.message : String(error)
+    }, { status: 500 });
   }
 }
 
-async function startLinkDiscovery(url: string, sessionId: string) {
-  const discovery = new LinkDiscovery();
-  
-  try {
-    console.log(`[Discover API] 링크 발견 시작: ${url} (세션: ${sessionId})`);
-    
-    const result = await discovery.discoverLinks(url, sessionId);
-    
-    captureStore.update(sessionId, {
-      status: 'completed',
-      result: {
-        baseUrl: result.baseUrl,
-        basePageTitle: result.basePageTitle,
-        baseScreenshot: result.baseScreenshot,
-        discoveredLinks: result.discoveredLinks,
-        totalLinks: result.totalLinks,
-        internalLinks: result.internalLinks
-      }
-    });
-    
-    console.log(`[Discover API] 링크 발견 완료: ${sessionId} - ${result.discoveredLinks.length}개 링크 발견`);
-    
-  } catch (error) {
-    console.error(`[Discover API] 링크 발견 실패: ${sessionId}`, error);
-    
-    captureStore.update(sessionId, {
-      status: 'failed',
-      error: error instanceof Error ? error.message : '알 수 없는 오류'
-    });
-  } finally {
-    await discovery.close();
-  }
-}
-
-// 링크 발견 상태 확인을 위한 GET 엔드포인트
-export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const sessionId = searchParams.get('sessionId');
-  
-  if (!sessionId) {
-    return createErrorResponse('Session ID is required');
-  }
-  
-  const captureInfo = captureStore.get(sessionId);
-  
-  if (!captureInfo) {
-    return createErrorResponse('Session not found', 404);
-  }
-  
-  const responseData = {
-    sessionId,
-    status: captureInfo.status,
-    ...(captureInfo.result && { 
-      baseUrl: captureInfo.result.baseUrl,
-      basePageTitle: captureInfo.result.basePageTitle,
-      discoveredLinks: captureInfo.result.discoveredLinks,
-      totalLinks: captureInfo.result.totalLinks,
-      internalLinks: captureInfo.result.internalLinks
-    }),
-    ...(captureInfo.error && { error: captureInfo.error })
-  };
-  
-  return createSuccessResponse(responseData);
-}
-
-// OPTIONS 메서드 추가 (CORS preflight 처리)
 export async function OPTIONS() {
-  return createOptionsResponse();
+  return new NextResponse(null, { 
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  });
 }

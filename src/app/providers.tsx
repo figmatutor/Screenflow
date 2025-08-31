@@ -47,9 +47,11 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider
       attribute="class"
-      defaultTheme="system"
-      enableSystem
-      disableTransitionOnChange
+      defaultTheme="dark"
+      enableSystem={false}
+      disableTransitionOnChange={false}
+      storageKey="screenflow-theme"
+      themes={['light', 'dark']}
     >
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     </ThemeProvider>
