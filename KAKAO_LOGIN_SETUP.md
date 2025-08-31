@@ -19,19 +19,22 @@ http://localhost:3001/auth/callback    (개발용)
 https://screenflow.pro/auth/callback   (프로덕션용)
 ```
 
-#### 🔐 동의항목 설정
+#### 🔐 동의항목 설정 (최소 수집)
 **경로:** 카카오 로그인 → 동의항목
 
-**필수 설정:**
-- ✅ OpenID Connect (openid) - 기본 식별자
+**필수 설정 (최소 수집항목):**
 - ✅ 닉네임 (profile_nickname) - 사용자 표시명
-- ✅ 프로필 사진 (profile_image) - 아바타 이미지
 - ✅ 카카오계정(이메일) (account_email) - 연락처 정보
 
-**권장 설정:**
-- 📧 이메일 주소 수집 동의 (필수 또는 선택)
-- 👤 닉네임 수집 동의 (필수)
-- 🖼️ 프로필 사진 수집 동의 (선택)
+**수집하지 않는 항목:**
+- ❌ OpenID Connect (openid) - 불필요
+- ❌ 프로필 사진 (profile_image) - 수집 안함
+- ❌ 기타 개인정보 - 수집 안함
+
+**개인정보 최소화 원칙:**
+- 🎯 서비스 운영에 꼭 필요한 정보만 수집
+- 🔒 사용자 프라이버시 보호 우선
+- 📝 투명한 정보 수집 정책
 
 ### 2. Supabase 대시보드 설정
 
@@ -80,17 +83,24 @@ curl http://localhost:3001/api/check-kakao-config
 - 프로덕션 환경에서는 반드시 `https://` 사용
 - 로컬 개발에서만 `http://` 허용
 
-### 스코프 설정
+### 스코프 설정 (최소화)
 현재 요청하는 스코프:
 ```javascript
-scopes: 'openid profile_nickname profile_image account_email'
+scopes: 'profile_nickname account_email'
 ```
 
-**스코프 설명:**
-- `openid`: OpenID Connect 표준 식별자 (필수)
-- `profile_nickname`: 카카오 닉네임 정보
-- `profile_image`: 프로필 이미지 URL
-- `account_email`: 카카오계정 이메일 주소
+**스코프 설명 (최소 수집):**
+- `profile_nickname`: 카카오 닉네임 정보 (필수)
+- `account_email`: 카카오계정 이메일 주소 (필수)
+
+**제거된 스코프:**
+- ❌ `openid`: OpenID Connect 불필요
+- ❌ `profile_image`: 프로필 사진 수집 안함
+
+**최소화 장점:**
+- 🚀 더 빠른 인증 과정
+- 🔒 향상된 사용자 프라이버시
+- ✅ 간단한 동의 절차
 
 ## 🔍 문제 해결
 

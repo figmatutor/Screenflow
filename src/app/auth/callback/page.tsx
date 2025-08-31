@@ -42,13 +42,13 @@ export default function AuthCallback() {
           const user = data.session.user;
           if (user) {
             try {
-              // 사용자 정보 처리 (카카오 로그인 포함)
-              console.log('[Auth Callback] 사용자 정보:', {
+              // 카카오 로그인 사용자 정보 처리 (닉네임 + 이메일만)
+              console.log('[Auth Callback] 카카오 사용자 정보:', {
                 id: user.id,
                 email: user.email,
                 provider: user.app_metadata?.provider,
-                user_metadata: user.user_metadata,
-                identities: user.identities
+                nickname: user.user_metadata?.nickname,
+                kakao_account: user.user_metadata?.kakao_account
               });
 
               const { data: existingUser, error: userError } = await supabase
@@ -58,18 +58,15 @@ export default function AuthCallback() {
                 .single();
 
               if (userError && userError.code === 'PGRST116') {
-                // 사용자가 존재하지 않으면 새로 생성
-                const displayName = user.user_metadata?.full_name || 
-                                  user.user_metadata?.name || 
-                                  user.user_metadata?.nickname ||
-                                  user.user_metadata?.preferred_username ||
+                // 새 사용자 생성 (닉네임과 이메일만 사용)
+                const displayName = user.user_metadata?.nickname || 
                                   user.email?.split('@')[0] || 
                                   '카카오 사용자';
 
-                console.log('[Auth Callback] 새 사용자 생성:', { 
+                console.log('[Auth Callback] 새 카카오 사용자 생성:', { 
                   displayName,
-                  provider: user.app_metadata?.provider,
-                  kakaoId: user.user_metadata?.sub || user.user_metadata?.provider_id
+                  email: user.email,
+                  provider: 'kakao'
                 });
 
                 const { error: insertError } = await supabase
@@ -87,25 +84,26 @@ export default function AuthCallback() {
                 if (insertError) {
                   console.error('[Auth Callback] 사용자 정보 저장 오류:', insertError);
                 } else {
-                  console.log('[Auth Callback] 사용자 정보 저장 완료');
+                  console.log('[Auth Callback] 카카오 사용자 정보 저장 완료');
                 }
               } else if (existingUser) {
-                console.log('[Auth Callback] 기존 사용자 로그인:', existingUser.display_name);
+                console.log('[Auth Callback] 기존 카카오 사용자 로그인:', existingUser.display_name);
                 
-                // 기존 사용자의 정보 업데이트 (필요시)
-                if (user.user_metadata?.nickname && existingUser.display_name !== user.user_metadata.nickname) {
+                // 닉네임이 변경된 경우에만 업데이트
+                const currentNickname = user.user_metadata?.nickname;
+                if (currentNickname && existingUser.display_name !== currentNickname) {
                   const { error: updateError } = await supabase
                     .from('users')
                     .update({
-                      display_name: user.user_metadata.nickname,
+                      display_name: currentNickname,
                       updated_at: new Date().toISOString()
                     })
                     .eq('id', user.id);
 
                   if (updateError) {
-                    console.error('[Auth Callback] 사용자 정보 업데이트 오류:', updateError);
+                    console.error('[Auth Callback] 닉네임 업데이트 오류:', updateError);
                   } else {
-                    console.log('[Auth Callback] 사용자 정보 업데이트 완료');
+                    console.log('[Auth Callback] 닉네임 업데이트 완료:', currentNickname);
                   }
                 }
               }
