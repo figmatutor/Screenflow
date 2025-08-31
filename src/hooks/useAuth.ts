@@ -1,20 +1,27 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/lib/supabase';
-import type { User, Session } from '@supabase/supabase-js';
-import type { Database } from '@/types/database.types';
+import { User, Session } from '@supabase/supabase-js';
+import { useRouter } from 'next/navigation';
 
-type UserProfile = Database['public']['Tables']['users']['Row'];
-
-export interface AuthUser extends User {
-  profile?: UserProfile;
+interface AuthContextType {
+  user: User | null;
+  session: Session | null;
+  loading: boolean;
+  isAuthenticated: boolean;
+  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, data?: any) => Promise<{ error: Error | null }>;
+  signOut: () => Promise<{ error: Error | null }>;
 }
 
-export function useAuth() {
-  const [user, setUser] = useState<AuthUser | null>(null);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     if (!supabase) {
@@ -22,97 +29,131 @@ export function useAuth() {
       return;
     }
 
-    // 현재 세션 확인
+    // 현재 세션 가져오기
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
-      
-      if (session?.user) {
-        // 사용자 프로필 정보 가져오기
-        const { data: profile } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        
-        setUser({
-          ...session.user,
-          profile: profile || undefined
-        });
-      } else {
-        setUser(null);
-      }
-      
+      setUser(session?.user || null);
       setLoading(false);
     };
 
     getSession();
 
-    // Auth 상태 변경 리스너
+    // 인증 상태 변화 감지
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('[Auth] State change:', event, session?.user?.email);
         setSession(session);
-        
-        if (session?.user) {
-          // 사용자 프로필 정보 가져오기
-          const { data: profile } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-          
-          setUser({
-            ...session.user,
-            profile: profile || undefined
-          });
-        } else {
-          setUser(null);
-        }
-        
+        setUser(session?.user || null);
         setLoading(false);
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription?.unsubscribe();
+    };
   }, []);
 
+  const signIn = async (email: string, password: string) => {
+    if (!supabase) return { error: new Error('Supabase client not available') };
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (!error && data.user) {
+        console.log('[Auth] Login successful:', data.user.email);
+        router.push('/');
+      }
+
+      return { error };
+    } catch (err) {
+      return { error: err as Error };
+    }
+  };
+
+  const signUp = async (email: string, password: string, userData?: any) => {
+    if (!supabase) return { error: new Error('Supabase client not available') };
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: userData,
+        },
+      });
+
+      if (!error && data.user) {
+        console.log('[Auth] Signup successful:', data.user.email);
+        
+        // users 테이블에 추가 정보 저장
+        const { error: insertError } = await supabase
+          .from('users')
+          .insert({
+            id: data.user.id,
+            email: data.user.email!,
+            display_name: userData?.display_name || null,
+            birth: userData?.birth || null,
+            address: userData?.address || null,
+          });
+
+        if (insertError) {
+          console.error('[Auth] Profile creation error:', insertError);
+          return { error: insertError };
+        }
+
+        router.push('/');
+      }
+
+      return { error };
+    } catch (err) {
+      return { error: err as Error };
+    }
+  };
+
   const signOut = async () => {
-    if (!supabase) return { error: 'Supabase client not available' };
-    
-    const { error } = await supabase.auth.signOut();
-    if (!error) {
-      setUser(null);
-      setSession(null);
+    if (!supabase) return { error: new Error('Supabase client not available') };
+
+    try {
+      const { error } = await supabase.auth.signOut();
+      
+      if (!error) {
+        console.log('[Auth] Logout successful');
+        router.push('/login');
+      }
+
+      return { error };
+    } catch (err) {
+      return { error: err as Error };
     }
-    return { error };
   };
 
-  const updateProfile = async (updates: Partial<UserProfile>) => {
-    if (!supabase || !user) return { error: 'User not authenticated' };
-    
-    const { data, error } = await supabase
-      .from('users')
-      .update(updates)
-      .eq('id', user.id)
-      .select()
-      .single();
-    
-    if (!error && data) {
-      setUser(prevUser => prevUser ? {
-        ...prevUser,
-        profile: data
-      } : null);
-    }
-    
-    return { data, error };
-  };
+  const isAuthenticated = !!user && !!session;
 
-  return {
-    user,
-    session,
-    loading,
-    signOut,
-    updateProfile,
-    isAuthenticated: !!session
-  };
+  return (
+    <AuthContext.Provider 
+      value={{ 
+        user, 
+        session, 
+        loading, 
+        isAuthenticated, 
+        signIn, 
+        signUp, 
+        signOut 
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 }
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
