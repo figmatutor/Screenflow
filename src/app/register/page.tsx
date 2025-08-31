@@ -127,20 +127,42 @@ export default function RegisterPage() {
     setError('');
 
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      console.log('[Kakao Register] OAuth 요청 시작');
+      console.log('[Kakao Register] 현재 도메인:', window.location.origin);
+      console.log('[Kakao Register] 리다이렉트 URL:', `${window.location.origin}/auth/callback`);
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'kakao',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`
+          redirectTo: `${window.location.origin}/auth/callback`,
+          scopes: 'profile_nickname profile_image account_email'
         }
+      });
+      
+      console.log('[Kakao Register] OAuth 응답:', { 
+        data: !!data, 
+        error: error?.message,
+        url: data?.url 
       });
 
       if (error) {
-        console.error('카카오 회원가입 오류:', error);
-        setError('카카오 회원가입 중 오류가 발생했습니다.');
+        console.error('[Kakao Register] OAuth 오류:', error);
+        
+        let errorMessage = '카카오 회원가입 중 오류가 발생했습니다.';
+        if (error.message.includes('redirect_uri')) {
+          errorMessage = '카카오 로그인 설정을 확인해주세요. 리다이렉트 URL이 올바르지 않습니다.';
+        } else if (error.message.includes('client_id')) {
+          errorMessage = '카카오 앱 설정을 확인해주세요.';
+        }
+        
+        setError(errorMessage);
+      } else if (data?.url) {
+        console.log('[Kakao Register] 카카오 인증 페이지로 리다이렉트:', data.url);
+        // OAuth URL로 자동 리다이렉트됨
       }
     } catch (err) {
-      console.error('카카오 회원가입 예외:', err);
-      setError('카카오 회원가입 중 오류가 발생했습니다.');
+      console.error('[Kakao Register] 예외 발생:', err);
+      setError(err instanceof Error ? err.message : '카카오 회원가입 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
     }

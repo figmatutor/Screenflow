@@ -119,15 +119,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!supabase) return { error: new Error('Supabase client not available') };
 
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      console.log('[useAuth] Kakao OAuth 요청 시작');
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'kakao',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`
+          redirectTo: `${window.location.origin}/auth/callback`,
+          scopes: 'profile_nickname profile_image account_email'
         }
       });
 
-      return { error };
+      console.log('[useAuth] Kakao OAuth 응답:', { 
+        data: !!data, 
+        error: error?.message,
+        url: data?.url 
+      });
+
+      return { error, data };
     } catch (err) {
+      console.error('[useAuth] Kakao OAuth 예외:', err);
       return { error: err as Error };
     }
   };

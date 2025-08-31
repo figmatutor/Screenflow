@@ -17,19 +17,46 @@ function validateSupabaseConfig() {
 
 // 클라이언트 생성 팩토리
 function createSupabaseClient() {
-  const isConfigValid = validateSupabaseConfig()
-  if (!isConfigValid && typeof window === 'undefined') {
-    // 서버 사이드 빌드 중이고 환경변수가 없으면 플레이스홀더 반환
-    return null
+  // 환경변수 검증
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    console.warn('[Supabase] 환경변수가 설정되지 않았습니다:', {
+      url: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+      anonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    });
+    
+    // 서버 사이드에서만 null 반환
+    if (typeof window === 'undefined') {
+      return null;
+    }
   }
   
-  return createClient<Database>(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      autoRefreshToken: true,
-      persistSession: true,
-      detectSessionInUrl: true
-    }
-  })
+  console.log('[Supabase] 클라이언트 생성 중:', {
+    url: supabaseUrl,
+    hasAnonKey: !!supabaseAnonKey,
+    isClient: typeof window !== 'undefined'
+  });
+  
+  try {
+    const client = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true,
+        flowType: 'pkce'
+      },
+      global: {
+        headers: {
+          'X-Client-Info': 'screenflow-web'
+        }
+      }
+    });
+    
+    console.log('[Supabase] 클라이언트 생성 완료');
+    return client;
+  } catch (error) {
+    console.error('[Supabase] 클라이언트 생성 실패:', error);
+    return null;
+  }
 }
 
 function createSupabaseAdminClient() {

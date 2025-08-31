@@ -42,7 +42,14 @@ export default function AuthCallback() {
           const user = data.session.user;
           if (user) {
             try {
-              // 카카오 로그인의 경우 추가 사용자 정보 처리
+              // 사용자 정보 처리 (카카오 로그인 포함)
+              console.log('[Auth Callback] 사용자 정보:', {
+                id: user.id,
+                email: user.email,
+                provider: user.app_metadata?.provider,
+                user_metadata: user.user_metadata
+              });
+
               const { data: existingUser, error: userError } = await supabase
                 .from('users')
                 .select('*')
@@ -51,12 +58,20 @@ export default function AuthCallback() {
 
               if (userError && userError.code === 'PGRST116') {
                 // 사용자가 존재하지 않으면 새로 생성
+                const displayName = user.user_metadata?.full_name || 
+                                  user.user_metadata?.name || 
+                                  user.user_metadata?.nickname ||
+                                  user.email?.split('@')[0] || 
+                                  '사용자';
+
+                console.log('[Auth Callback] 새 사용자 생성:', { displayName });
+
                 const { error: insertError } = await supabase
                   .from('users')
                   .insert([{
                     id: user.id,
                     email: user.email || '',
-                    display_name: user.user_metadata?.full_name || user.user_metadata?.name || '카카오 사용자',
+                    display_name: displayName,
                     birth: null,
                     address: null,
                     created_at: new Date().toISOString(),
@@ -64,8 +79,12 @@ export default function AuthCallback() {
                   }]);
 
                 if (insertError) {
-                  console.error('사용자 정보 저장 오류:', insertError);
+                  console.error('[Auth Callback] 사용자 정보 저장 오류:', insertError);
+                } else {
+                  console.log('[Auth Callback] 사용자 정보 저장 완료');
                 }
+              } else if (existingUser) {
+                console.log('[Auth Callback] 기존 사용자 로그인:', existingUser.display_name);
               }
             } catch (userProcessError) {
               console.error('사용자 정보 처리 오류:', userProcessError);
