@@ -8,7 +8,7 @@ export default function DebugSupabase() {
 
   useEffect(() => {
     const checkSupabase = async () => {
-      const info = {
+      const info: any = {
         clientExists: !!supabase,
         envVars: {
           url: process.env.NEXT_PUBLIC_SUPABASE_URL,
