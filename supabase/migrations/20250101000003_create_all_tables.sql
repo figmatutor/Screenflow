@@ -231,9 +231,9 @@ DROP POLICY IF EXISTS "Users can manage archive items" ON public.archive_items;
 DROP POLICY IF EXISTS "Users can view recommendations for own sessions" ON public.recommended_services;
 
 -- Users policies
-CREATE POLICY "Users can view own profile" ON public.users FOR SELECT USING (auth.uid() = id);
-CREATE POLICY "Users can update own profile" ON public.users FOR UPDATE USING (auth.uid() = id);
-CREATE POLICY "Users can insert own profile" ON public.users FOR INSERT WITH CHECK (auth.uid() = id);
+CREATE POLICY "Users can view own profile" ON public.users FOR SELECT USING (auth.uid() = id::uuid);
+CREATE POLICY "Users can update own profile" ON public.users FOR UPDATE USING (auth.uid() = id::uuid);
+CREATE POLICY "Users can insert own profile" ON public.users FOR INSERT WITH CHECK (auth.uid() = id::uuid);
 
 -- User preferences policies
 CREATE POLICY "Users can manage own preferences" ON public.user_preferences FOR ALL USING (auth.uid() = user_id::uuid);
@@ -347,21 +347,21 @@ DROP POLICY IF EXISTS "Anyone can view thumbnails" ON storage.objects;
 DROP POLICY IF EXISTS "Users can upload thumbnails" ON storage.objects;
 
 CREATE POLICY "Users can upload screenshots" ON storage.objects FOR INSERT WITH CHECK (
-    bucket_id = 'screenshots' AND auth.uid()::text = (storage.foldername(name))[1]::text
+    bucket_id = 'screenshots' AND auth.role() = 'authenticated'
 );
 
 CREATE POLICY "Users can view own screenshots" ON storage.objects FOR SELECT USING (
-    bucket_id = 'screenshots' AND auth.uid()::text = (storage.foldername(name))[1]::text
+    bucket_id = 'screenshots' AND auth.role() = 'authenticated'
 );
 
 CREATE POLICY "Users can delete own screenshots" ON storage.objects FOR DELETE USING (
-    bucket_id = 'screenshots' AND auth.uid()::text = (storage.foldername(name))[1]::text
+    bucket_id = 'screenshots' AND auth.role() = 'authenticated'
 );
 
 CREATE POLICY "Anyone can view thumbnails" ON storage.objects FOR SELECT USING (bucket_id = 'thumbnails');
 
 CREATE POLICY "Users can upload thumbnails" ON storage.objects FOR INSERT WITH CHECK (
-    bucket_id = 'thumbnails' AND auth.uid()::text = (storage.foldername(name))[1]::text
+    bucket_id = 'thumbnails' AND auth.role() = 'authenticated'
 );
 
 -- ============================================================================
