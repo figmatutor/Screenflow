@@ -15,12 +15,13 @@ CREATE TABLE IF NOT EXISTS public.users (
     id UUID REFERENCES auth.users NOT NULL PRIMARY KEY,
     email TEXT UNIQUE NOT NULL,
     display_name TEXT,
-    avatar_url TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     subscription_tier TEXT DEFAULT 'free' CHECK (subscription_tier IN ('free', 'pro', 'enterprise')),
     storage_used BIGINT DEFAULT 0,
-    storage_limit BIGINT DEFAULT 1073741824
+    storage_limit BIGINT DEFAULT 1073741824,
+    birth DATE,
+    address TEXT
 );
 
 -- USER_PREFERENCES 테이블

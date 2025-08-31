@@ -106,15 +106,23 @@ scopes: 'profile_nickname account_email'
 
 ### 자주 발생하는 오류
 
-#### 1. `redirect_uri_mismatch`
+#### 1. `KOE205` 오류 ⚠️ (중요!)
+- **원인**: 카카오 개발자 콘솔에서 "사용 안함"으로 설정된 동의항목을 코드에서 요청
+- **해결**: 
+  - 카카오 개발자 콘솔에서 프로필 사진을 "사용 안함"으로 설정한 경우
+  - 코드에서 `profile_image` 스코프를 제거해야 함
+  - **현재 설정**: `scopes: 'profile_nickname account_email'` (프로필 사진 제외)
+- **확인 방법**: 카카오 로그인 → 동의항목에서 프로필 사진이 "사용 안함"인지 확인
+
+#### 2. `redirect_uri_mismatch`
 - 카카오 콘솔의 Redirect URI 설정 확인
 - 도메인과 포트 번호 정확성 확인
 
-#### 2. `invalid_client`
+#### 3. `invalid_client`
 - 카카오 REST API 키 확인
 - Supabase의 Client ID 설정 확인
 
-#### 3. `access_denied`
+#### 4. `access_denied`
 - 카카오 동의항목 설정 확인
 - 사용자가 필수 동의항목을 거부했는지 확인
 

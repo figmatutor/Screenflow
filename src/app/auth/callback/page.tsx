@@ -42,13 +42,14 @@ export default function AuthCallback() {
           const user = data.session.user;
           if (user) {
             try {
-              // 카카오 로그인 사용자 정보 처리 (닉네임 + 이메일만)
-              console.log('[Auth Callback] 카카오 사용자 정보:', {
+              // 카카오 로그인 사용자 정보 처리 (닉네임 + 이메일만, 프로필 사진 수집 안함)
+              console.log('[Auth Callback] 카카오 사용자 정보 (최소 수집):', {
                 id: user.id,
                 email: user.email,
                 provider: user.app_metadata?.provider,
                 nickname: user.user_metadata?.nickname,
-                kakao_account: user.user_metadata?.kakao_account
+                // 프로필 사진은 수집하지 않음 (KOE205 에러 방지)
+                collected_scopes: 'profile_nickname account_email'
               });
 
               const { data: existingUser, error: userError } = await supabase
