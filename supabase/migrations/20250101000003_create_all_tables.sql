@@ -236,28 +236,28 @@ CREATE POLICY "Users can update own profile" ON public.users FOR UPDATE USING (a
 CREATE POLICY "Users can insert own profile" ON public.users FOR INSERT WITH CHECK (auth.uid() = id);
 
 -- User preferences policies
-CREATE POLICY "Users can manage own preferences" ON public.user_preferences FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can manage own preferences" ON public.user_preferences FOR ALL USING (auth.uid() = user_id::uuid);
 
 -- Capture sessions policies
-CREATE POLICY "Users can manage own capture sessions" ON public.capture_sessions FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can manage own capture sessions" ON public.capture_sessions FOR ALL USING (auth.uid() = user_id::uuid);
 
 -- Screenshots policies
-CREATE POLICY "Users can manage own screenshots" ON public.screenshots FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can manage own screenshots" ON public.screenshots FOR ALL USING (auth.uid() = user_id::uuid);
 
 -- Archives policies
-CREATE POLICY "Users can manage own archives" ON public.archives FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can manage own archives" ON public.archives FOR ALL USING (auth.uid() = user_id::uuid);
 CREATE POLICY "Anyone can view public archives" ON public.archives FOR SELECT USING (is_public = true);
 
 -- Archive items policies
 CREATE POLICY "Users can manage archive items" ON public.archive_items FOR ALL USING (
-    auth.uid() IN (
+    auth.uid()::uuid IN (
         SELECT user_id FROM public.archives WHERE id = archive_id
     )
 );
 
 -- Recommended services policies
 CREATE POLICY "Users can view recommendations for own sessions" ON public.recommended_services FOR SELECT USING (
-    auth.uid() IN (
+    auth.uid()::uuid IN (
         SELECT user_id FROM public.capture_sessions WHERE id = session_id
     )
 );
@@ -347,21 +347,21 @@ DROP POLICY IF EXISTS "Anyone can view thumbnails" ON storage.objects;
 DROP POLICY IF EXISTS "Users can upload thumbnails" ON storage.objects;
 
 CREATE POLICY "Users can upload screenshots" ON storage.objects FOR INSERT WITH CHECK (
-    bucket_id = 'screenshots' AND auth.uid()::text = (storage.foldername(name))[1]
+    bucket_id = 'screenshots' AND auth.uid()::text = (storage.foldername(name))[1]::text
 );
 
 CREATE POLICY "Users can view own screenshots" ON storage.objects FOR SELECT USING (
-    bucket_id = 'screenshots' AND auth.uid()::text = (storage.foldername(name))[1]
+    bucket_id = 'screenshots' AND auth.uid()::text = (storage.foldername(name))[1]::text
 );
 
 CREATE POLICY "Users can delete own screenshots" ON storage.objects FOR DELETE USING (
-    bucket_id = 'screenshots' AND auth.uid()::text = (storage.foldername(name))[1]
+    bucket_id = 'screenshots' AND auth.uid()::text = (storage.foldername(name))[1]::text
 );
 
 CREATE POLICY "Anyone can view thumbnails" ON storage.objects FOR SELECT USING (bucket_id = 'thumbnails');
 
 CREATE POLICY "Users can upload thumbnails" ON storage.objects FOR INSERT WITH CHECK (
-    bucket_id = 'thumbnails' AND auth.uid()::text = (storage.foldername(name))[1]
+    bucket_id = 'thumbnails' AND auth.uid()::text = (storage.foldername(name))[1]::text
 );
 
 -- ============================================================================
