@@ -213,8 +213,7 @@ export async function POST(req: NextRequest) {
       // 5. ZIP 파일 응답
       const filename = `screenshots-${baseUrl.hostname}-${Date.now()}.zip`;
       
-      const blob = new Blob([zipBuffer.buffer], { type: 'application/zip' });
-      return new NextResponse(blob, {
+      return new NextResponse(Buffer.from(zipBuffer), {
         headers: {
           'Content-Type': 'application/zip',
           'Content-Disposition': `attachment; filename="${filename}"`,

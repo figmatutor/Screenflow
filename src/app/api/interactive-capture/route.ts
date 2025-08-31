@@ -140,10 +140,10 @@ export async function POST(request: NextRequest) {
 
               // 요소에 호버 후 클릭
               await elementHandle.hover();
-              await page.waitForTimeout(clickDelay);
+              await new Promise(resolve => setTimeout(resolve, clickDelay));
               
               await elementHandle.click({ delay: clickDelay });
-              await page.waitForTimeout(waitTimeout);
+              await new Promise(resolve => setTimeout(resolve, waitTimeout));
 
               // 클릭 후 페이지 캡처
               await capture(
@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
                 try {
                   console.log(`[Interactive Capture] URL 변경 감지, 뒤로 가기: ${newUrl} → ${currentUrl}`);
                   await page.goBack({ waitUntil: 'networkidle2', timeout: 15000 });
-                  await page.waitForTimeout(1000);
+                  await new Promise(resolve => setTimeout(resolve, 1000));
                 } catch (backError) {
                   console.warn(`[Interactive Capture] 뒤로 가기 실패, 원본 URL로 재로드: ${currentUrl}`);
                   await page.goto(currentUrl, { waitUntil: 'networkidle2', timeout: 15000 });
@@ -199,8 +199,7 @@ export async function POST(request: NextRequest) {
       const baseUrl = new URL(url);
       const filename = `interactive-capture-${baseUrl.hostname}-${sessionId.substring(0, 8)}.zip`;
       
-      const blob = new Blob([zipBuffer.buffer], { type: 'application/zip' });
-      return new NextResponse(blob, {
+      return new NextResponse(Buffer.from(zipBuffer), {
         status: 200,
         headers: {
           'Content-Type': 'application/zip',

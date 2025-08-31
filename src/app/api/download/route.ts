@@ -90,8 +90,7 @@ export async function GET(request: NextRequest) {
           return NextResponse.json({ error: 'Failed to create ZIP file' }, { status: 500 });
         }
         
-        const blob = new Blob([zipBuffer.buffer], { type: 'application/zip' });
-        const response = new NextResponse(blob);
+        const response = new NextResponse(Buffer.from(zipBuffer));
         response.headers.set('Content-Type', 'application/zip');
         response.headers.set('Content-Disposition', `attachment; filename="auto_capture_${sessionId}.zip"`);
         response.headers.set('Content-Length', zipBuffer.length.toString());
@@ -265,7 +264,7 @@ async function createSelectedZip(crawledPages: any[], selectedFiles: string | nu
     const zipFiles = Object.keys(zip.files);
     console.log(`[Download API] ZIP 내부 파일 목록 (${zipFiles.length}개):`, zipFiles);
     
-    return zipBuffer;
+    return Buffer.from(zipBuffer);
     
   } catch (error) {
     console.error('[Download API] ZIP 생성 중 오류 발생:', error);

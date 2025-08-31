@@ -1,6 +1,5 @@
-import type { NextConfig } from 'next';
-
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   /* config options here */
   eslint: {
     ignoreDuringBuilds: true,
@@ -37,20 +36,6 @@ const nextConfig: NextConfig = {
     }
     return config;
   },
-  turbo: {
-    // Turbopack용 설정
-    resolveAlias: {
-      // Node.js 모듈들을 false로 매핑 (클라이언트에서 사용 방지)
-      net: false,
-      tls: false,
-      dns: false,
-      fs: false,
-      os: false,
-      crypto: false,
-      http: false,
-      https: false,
-    },
-  },
   serverExternalPackages: [
     'puppeteer-core',
     '@sparticuz/chromium',
@@ -59,4 +44,4 @@ const nextConfig: NextConfig = {
   ],
 };
 
-export default nextConfig;
+module.exports = nextConfig;

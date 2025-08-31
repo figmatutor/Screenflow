@@ -4,7 +4,8 @@ import chromium from '@sparticuz/chromium';
 /**
  * Vercel과 로컬 환경 모두에서 작동하는 브라우저 런처
  */
-export async function launchBrowser(): Promise<Browser> {
+export class BrowserLauncher {
+  static async launch(): Promise<Browser> {
     console.log(`[BrowserLauncher] 브라우저 초기화 시작`);
     
     try {
@@ -124,4 +125,10 @@ export async function launchBrowser(): Promise<Browser> {
       console.error(`[BrowserLauncher] 브라우저 초기화 실패:`, error);
       throw new Error(`브라우저 초기화 실패: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
+  }
+}
+
+// 기존 함수도 유지 (하위 호환성)
+export async function launchBrowser(): Promise<Browser> {
+  return BrowserLauncher.launch();
 }

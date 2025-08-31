@@ -159,8 +159,7 @@ export async function POST(request: NextRequest) {
       const baseUrl = new URL(url);
       const filename = `auto-capture-flow-${baseUrl.hostname}-${Date.now()}.zip`;
       
-      const blob = new Blob([zipBuffer.buffer], { type: 'application/zip' });
-      return new NextResponse(blob, {
+      return new NextResponse(Buffer.from(zipBuffer), {
         status: 200,
         headers: {
           'Content-Type': 'application/zip',

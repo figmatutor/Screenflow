@@ -119,13 +119,13 @@ async function captureScreenshotsAsync(sessionId: string, urls: string[]) {
         await waitForCSSLoading(page);
 
         // 추가 렌더링 대기 (폰트, 이미지 등)
-        await page.waitForTimeout(2000);
+        await new Promise(resolve => setTimeout(resolve, 2000));
 
         // 자동 스크롤 (lazy load 컨텐츠 로딩)
         await autoScroll(page);
 
         // 최종 렌더링 완료 대기
-        await page.waitForTimeout(1000);
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
         // 스크린샷 촬영 (전체 페이지, 고품질)
         const buffer = await page.screenshot({ 
@@ -251,7 +251,7 @@ async function waitForCSSLoading(page: any) {
           if (sheet.href) {
             const link = document.querySelector(`link[href="${sheet.href}"]`);
             if (link) {
-              if (link.complete) {
+              if ((link as any).complete) {
                 resolve(true);
               } else {
                 link.addEventListener('load', () => resolve(true));

@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
           });
           
           // 버퍼 시간 대기
-          await page.waitForTimeout(bufferTime);
+          await new Promise(resolve => setTimeout(resolve, bufferTime));
           
           console.log(`[Capture Flow] 스크린샷 촬영 중: ${link}`);
           const linkScreenshot = await page.screenshot({ 
@@ -148,8 +148,7 @@ export async function POST(request: NextRequest) {
       const baseUrl = new URL(url);
       const filename = `capture-flow-${baseUrl.hostname}-${Date.now()}.zip`;
       
-      const blob = new Blob([zipBuffer.buffer], { type: 'application/zip' });
-      return new NextResponse(blob, {
+      return new NextResponse(Buffer.from(zipBuffer), {
         status: 200,
         headers: {
           'Content-Type': 'application/zip',
@@ -211,7 +210,7 @@ async function launchBrowser() {
         '--allow-running-insecure-content'
       ],
       executablePath,
-      headless: 'new',
+      headless: true,
       defaultViewport: { width: 1280, height: 720 },
       timeout: 30000
     });
@@ -249,7 +248,7 @@ async function launchBrowser() {
     }
     
     return await puppeteer.launch({
-      headless: 'new',
+      headless: true,
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',

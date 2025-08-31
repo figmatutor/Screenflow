@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
           '--disable-features=VizDisplayCompositor'
         ],
         executablePath,
-        headless: chromium.headless,
+        headless: true,
         defaultViewport: { width: 1280, height: 720 },
         timeout: 30000
       });

@@ -53,10 +53,8 @@ export default function RootLayout({
         
         {/* Preload critical fonts */}
         <link
-          rel="preload"
+          rel="stylesheet"
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"
-          as="style"
-          onLoad="this.onload=null;this.rel='stylesheet'"
         />
         <noscript>
           <link

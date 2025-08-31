@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
         });
       }
       
-      await page.waitForTimeout(waitTime);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
 
       const firstScreenshot = await page.screenshot({ 
         fullPage: true, 
@@ -176,7 +176,7 @@ export async function POST(request: NextRequest) {
           console.log(`[Flow Capture] ${step}단계: 페이지 로딩 대기 타임아웃, 계속 진행`);
         }
         
-        await page.waitForTimeout(waitTime);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
 
         // 스크린샷 촬영
         const screenshot = await page.screenshot({ 
