@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
           return NextResponse.json({ error: 'Failed to create ZIP file' }, { status: 500 });
         }
         
-        const blob = new Blob([zipBuffer], { type: 'application/zip' });
+        const blob = new Blob([zipBuffer.buffer], { type: 'application/zip' });
         const response = new NextResponse(blob);
         response.headers.set('Content-Type', 'application/zip');
         response.headers.set('Content-Disposition', `attachment; filename="auto_capture_${sessionId}.zip"`);
@@ -110,7 +110,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'No data available' }, { status: 404 });
       }
       
-      const blob = new Blob([zipBuffer], { type: 'application/zip' });
+      const blob = new Blob([zipBuffer.buffer], { type: 'application/zip' });
       const response = new NextResponse(blob);
       response.headers.set('Content-Type', 'application/zip');
       

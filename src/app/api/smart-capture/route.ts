@@ -294,7 +294,7 @@ export async function POST(request: NextRequest) {
       const baseUrl = new URL(url);
       const filename = `smart-capture-${baseUrl.hostname}-${sessionId.substring(0, 8)}.zip`;
       
-      const blob = new Blob([zipBuffer], { type: 'application/zip' });
+      const blob = new Blob([zipBuffer.buffer], { type: 'application/zip' });
       return new NextResponse(blob, {
         status: 200,
         headers: {

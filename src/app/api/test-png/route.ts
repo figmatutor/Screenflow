@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
         // 바이너리로 직접 반환
         console.log(`[Test PNG API] 바이너리 PNG 반환: ${pngBuffer.length} bytes`);
         
-        const blob = new Blob([pngBuffer], { type: 'image/png' });
+        const blob = new Blob([pngBuffer.buffer], { type: 'image/png' });
         const response = new NextResponse(blob);
         response.headers.set('Content-Type', 'image/png');
         response.headers.set('Content-Length', pngBuffer.length.toString());

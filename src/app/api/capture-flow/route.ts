@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
       const baseUrl = new URL(url);
       const filename = `capture-flow-${baseUrl.hostname}-${Date.now()}.zip`;
       
-      const blob = new Blob([zipBuffer], { type: 'application/zip' });
+      const blob = new Blob([zipBuffer.buffer], { type: 'application/zip' });
       return new NextResponse(blob, {
         status: 200,
         headers: {

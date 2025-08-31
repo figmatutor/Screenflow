@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
     console.log(`[Test Screenshot API] 브라우저 종료 완료`);
 
     // PNG 이미지로 응답
-    const blob = new Blob([screenshotBuffer], { type: 'image/png' });
+    const blob = new Blob([screenshotBuffer.buffer], { type: 'image/png' });
     return new NextResponse(blob, {
       status: 200,
       headers: {
