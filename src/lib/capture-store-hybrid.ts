@@ -28,7 +28,7 @@ class HybridCaptureStore {
         const { error } = await supabaseAdmin!
           .from('capture_sessions')
           .upsert({
-            session_id: sessionId,
+            id: sessionId,
             status: session.status,
             result: session.result || null,
             error: session.error || null,
@@ -61,7 +61,7 @@ class HybridCaptureStore {
         const { data, error } = await supabaseAdmin!
           .from('capture_sessions')
           .select('*')
-          .eq('session_id', sessionId)
+          .eq('id', sessionId)
           .single();
 
         if (!error && data) {
@@ -108,7 +108,7 @@ class HybridCaptureStore {
         await supabaseAdmin!
           .from('capture_sessions')
           .update(updateData)
-          .eq('session_id', sessionId);
+          .eq('id', sessionId);
       } catch (err) {
         console.error('[HybridCaptureStore] Supabase update error:', err);
       }
@@ -125,7 +125,7 @@ class HybridCaptureStore {
         await supabaseAdmin!
           .from('capture_sessions')
           .delete()
-          .eq('session_id', sessionId);
+          .eq('id', sessionId);
       } catch (err) {
         console.error('[HybridCaptureStore] Supabase delete error:', err);
       }
@@ -153,8 +153,8 @@ class HybridCaptureStore {
           .order('created_at', { ascending: false });
 
         for (const row of data || []) {
-          if (!result[row.session_id]) {
-            result[row.session_id] = {
+          if (!result[row.id]) {
+            result[row.id] = {
               status: row.status,
               result: row.result,
               error: row.error,

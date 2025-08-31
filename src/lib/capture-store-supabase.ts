@@ -23,7 +23,7 @@ class SupabaseCaptureStore {
       const { error } = await supabaseAdmin
         .from(this.tableName)
         .upsert({
-          session_id: sessionId,
+          id: sessionId,
           status: session.status,
           result: session.result || null,
           error: session.error || null,
@@ -51,7 +51,7 @@ class SupabaseCaptureStore {
       const { data, error } = await supabaseAdmin
         .from(this.tableName)
         .select('*')
-        .eq('session_id', sessionId)
+        .eq('id', sessionId)
         .single();
 
       if (error) {
@@ -99,7 +99,7 @@ class SupabaseCaptureStore {
       const { error } = await supabaseAdmin
         .from(this.tableName)
         .update(updateData)
-        .eq('session_id', sessionId);
+        .eq('id', sessionId);
 
       if (error) {
         console.error('[SupabaseCaptureStore] Error updating session:', error);
@@ -121,7 +121,7 @@ class SupabaseCaptureStore {
       const { error } = await supabaseAdmin
         .from(this.tableName)
         .delete()
-        .eq('session_id', sessionId);
+        .eq('id', sessionId);
 
       if (error) {
         console.error('[SupabaseCaptureStore] Error deleting session:', error);
@@ -156,7 +156,7 @@ class SupabaseCaptureStore {
 
       const sessions: Record<string, CaptureSession> = {};
       for (const row of data || []) {
-        sessions[row.session_id] = {
+        sessions[row.id] = {
           status: row.status,
           result: row.result,
           error: row.error,

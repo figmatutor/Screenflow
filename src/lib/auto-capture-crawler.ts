@@ -49,13 +49,19 @@ export class AutoCaptureCrawler {
 
   async initialize(): Promise<void> {
     console.log(`[AutoCaptureCrawler] 브라우저 초기화 시작`);
+    console.log(`[AutoCaptureCrawler] 환경 변수:`, {
+      VERCEL: process.env.VERCEL,
+      NODE_ENV: process.env.NODE_ENV,
+      AWS_LAMBDA: process.env.AWS_LAMBDA_FUNCTION_NAME
+    });
     
     try {
       this.browser = await launchBrowser();
       console.log(`[AutoCaptureCrawler] 브라우저 초기화 완료`);
     } catch (error) {
       console.error(`[AutoCaptureCrawler] 브라우저 초기화 실패:`, error);
-      throw error;
+      console.error(`[AutoCaptureCrawler] 오류 스택:`, error instanceof Error ? error.stack : 'No stack trace');
+      throw new Error(`브라우저 초기화 실패: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 

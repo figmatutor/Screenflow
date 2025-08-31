@@ -28,7 +28,7 @@ class SupabasePrimaryCaptureStore {
       // 테이블 존재 확인
       const { data, error } = await supabaseAdmin
         .from('capture_sessions')
-        .select('session_id')
+        .select('id')
         .limit(1);
 
       if (error) {
@@ -53,7 +53,7 @@ class SupabasePrimaryCaptureStore {
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
           const supabaseData = {
-            session_id: sessionId,
+            id: sessionId,
             status: session.status,
             result: session.result || null,
             error: session.error || null,
@@ -65,7 +65,7 @@ class SupabasePrimaryCaptureStore {
           const { data, error } = await supabaseAdmin
             .from('capture_sessions')
             .upsert(supabaseData, { 
-              onConflict: 'session_id',
+              onConflict: 'id',
               ignoreDuplicates: false 
             })
             .select();
@@ -109,7 +109,7 @@ class SupabasePrimaryCaptureStore {
         const { data, error } = await supabaseAdmin
           .from('capture_sessions')
           .select('*')
-          .eq('session_id', sessionId)
+          .eq('id', sessionId)
           .single();
 
         if (error) {
@@ -141,12 +141,12 @@ class SupabasePrimaryCaptureStore {
       try {
         const { data: allSessions } = await supabaseAdmin
           .from('capture_sessions')
-          .select('session_id, status, created_at')
+          .select('id, status, created_at')
           .order('created_at', { ascending: false })
           .limit(10);
         
         console.log(`[SupabasePrimaryCaptureStore] 최근 Supabase 세션들:`, 
-          allSessions?.map(s => `${s.session_id}(${s.status})`) || []);
+          allSessions?.map(s => `${s.id}(${s.status})`) || []);
       } catch (err) {
         console.error(`[SupabasePrimaryCaptureStore] Supabase 전체 조회 실패:`, err);
       }
@@ -177,7 +177,7 @@ class SupabasePrimaryCaptureStore {
         const { error } = await supabaseAdmin
           .from('capture_sessions')
           .update(updateData)
-          .eq('session_id', sessionId);
+          .eq('id', sessionId);
 
         if (error) {
           throw error;
@@ -200,7 +200,7 @@ class SupabasePrimaryCaptureStore {
         await supabaseAdmin
           .from('capture_sessions')
           .delete()
-          .eq('session_id', sessionId);
+          .eq('id', sessionId);
         console.log(`[SupabasePrimaryCaptureStore] Supabase 삭제 성공: ${sessionId}`);
       } catch (err) {
         console.error(`[SupabasePrimaryCaptureStore] Supabase 삭제 실패:`, err);
@@ -229,8 +229,8 @@ class SupabasePrimaryCaptureStore {
           .order('created_at', { ascending: false });
 
         for (const row of data || []) {
-          if (!result[row.session_id]) {
-            result[row.session_id] = {
+          if (!result[row.id]) {
+            result[row.id] = {
               status: row.status,
               result: row.result,
               error: row.error,
