@@ -18,27 +18,50 @@ export default function LoginPage() {
     setError('');
 
     try {
+      console.log('[Login] 로그인 시도 시작:', { email });
+      
       if (!supabase) {
+        console.error('[Login] Supabase 클라이언트가 없습니다');
         setError('로그인 서비스를 사용할 수 없습니다.');
         return;
       }
 
-      const { error } = await supabase.auth.signInWithPassword({
+      console.log('[Login] Supabase 인증 요청 중...');
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
+      console.log('[Login] 인증 응답:', { data: !!data, error: error?.message });
+
       if (error) {
-        setError(error.message === 'Invalid login credentials' 
-          ? '이메일 또는 비밀번호가 올바르지 않습니다.' 
-          : error.message);
+        console.error('[Login] 인증 오류:', error);
+        
+        // 더 구체적인 오류 메시지 제공
+        let errorMessage = '로그인 중 오류가 발생했습니다.';
+        
+        if (error.message === 'Invalid login credentials') {
+          errorMessage = '이메일 또는 비밀번호가 올바르지 않습니다.';
+        } else if (error.message.includes('Email not confirmed')) {
+          errorMessage = '이메일 인증이 필요합니다. 이메일을 확인해주세요.';
+        } else if (error.message.includes('fetch')) {
+          errorMessage = '네트워크 연결을 확인해주세요.';
+        } else {
+          errorMessage = error.message;
+        }
+        
+        setError(errorMessage);
         return;
       }
 
-      // 로그인 성공 시 메인 페이지로 리다이렉트
-      router.push('/');
+      if (data?.user) {
+        console.log('[Login] 로그인 성공:', data.user.email);
+        // 로그인 성공 시 메인 페이지로 리다이렉트
+        router.push('/');
+      }
     } catch (err) {
-      setError('로그인 중 오류가 발생했습니다.');
+      console.error('[Login] 예외 발생:', err);
+      setError(err instanceof Error ? err.message : '로그인 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
     }
