@@ -1,5 +1,5 @@
 import { Browser, Page } from 'puppeteer-core';
-import { launchBrowser } from './browser-launcher';
+import { BrowserLauncher } from './browser-launcher';
 import JSZip from 'jszip';
 import { DiscoveredLink } from './link-discovery';
 
@@ -38,7 +38,7 @@ export class SelectiveCapture {
     console.log(`[SelectiveCapture] 브라우저 초기화 시작`);
     
     try {
-      this.browser = await launchBrowser();
+      this.browser = await BrowserLauncher.launch();
       console.log(`[SelectiveCapture] 브라우저 초기화 완료`);
     } catch (error) {
       console.error(`[SelectiveCapture] 브라우저 초기화 실패:`, error);
@@ -220,7 +220,7 @@ export class SelectiveCapture {
     }
     
     console.log(`[SelectiveCapture] ZIP 파일 생성 중...`);
-    const zipBuffer = await zip.generateAsync({ type: 'uint8array' });
+    const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' });
     console.log(`[SelectiveCapture] ZIP 파일 생성 완료: ${zipBuffer.length} bytes`);
     
     return zipBuffer;

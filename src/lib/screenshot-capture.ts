@@ -1,6 +1,6 @@
 import { CrawledPage } from "./auto-capture-crawler";
 import { Browser, Page } from 'puppeteer-core';
-import { launchBrowser } from './browser-launcher';
+import { BrowserLauncher } from './browser-launcher';
 import JSZip from 'jszip';
 
 export interface CaptureResult {
@@ -97,7 +97,7 @@ export class ScreenshotCapture {
     console.log(`[ScreenshotCapture] 브라우저 초기화 시작`);
     
     try {
-      this.browser = await launchBrowser();
+      this.browser = await BrowserLauncher.launch();
       console.log(`[ScreenshotCapture] 브라우저 초기화 완료`);
     } catch (error) {
       console.error(`[ScreenshotCapture] 브라우저 초기화 실패:`, error);
@@ -328,7 +328,7 @@ export class ScreenshotCapture {
     }
     
     console.log(`[ScreenshotCapture] ZIP 파일 생성 중...`);
-    const zipBuffer = await zip.generateAsync({ type: 'uint8array' });
+    const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' });
     console.log(`[ScreenshotCapture] ZIP 파일 생성 완료: ${zipBuffer.length} bytes`);
     
     return zipBuffer;
@@ -921,7 +921,7 @@ export class ScreenshotCapture {
     }
     
     console.log(`[FlowCapture] ZIP 파일 생성 중...`);
-    const zipBuffer = await zip.generateAsync({ type: 'uint8array' });
+    const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' });
     console.log(`[FlowCapture] ZIP 파일 생성 완료: ${zipBuffer.length} bytes`);
     
     return zipBuffer;
