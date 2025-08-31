@@ -136,6 +136,16 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center px-4">
+      {/* 좌측 상단 로고 */}
+      <div className="fixed top-6 left-6 z-10">
+        <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
+          <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+            <span className="text-black font-bold text-lg">S</span>
+          </div>
+          <span className="text-white font-semibold text-xl">ScreenFlow</span>
+        </Link>
+      </div>
+
       {/* 로고 및 타이틀 */}
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
