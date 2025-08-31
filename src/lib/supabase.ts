@@ -2,39 +2,46 @@ import { createClient } from '@supabase/supabase-js'
 import { Database } from '@/types/database.types'
 
 // 환경변수에서 Supabase 설정 가져오기
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key'
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://cpaqhythcmolwbdlygen.supabase.co'
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNwYXFoeXRoY21vbHdiZGx5Z2VuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQxMTQ5ODgsImV4cCI6MjA2OTY5MDk4OH0.CpvvvupytlpCPIZ9vBEnaimSn7Aww7bPehBOakvWPwQ'
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNwYXFoeXRoY21vbHdiZGx5Z2VuIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDExNDk4OCwiZXhwIjoyMDY5NjkwOTg4fQ.WBHyVT0A4NUlGWq-fJANVER97sm7trXKVDbkojnldgQ'
+
+console.log('[Supabase Config] 환경변수 로드:', {
+  url: supabaseUrl,
+  hasAnonKey: !!supabaseAnonKey && supabaseAnonKey !== 'placeholder-anon-key',
+  hasServiceKey: !!supabaseServiceRoleKey,
+  isClient: typeof window !== 'undefined'
+});
 
 // 환경변수 검증 함수
 function validateSupabaseConfig() {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    console.warn('Supabase environment variables are not set. Using placeholder values for build.')
-    return false
+  const hasUrl = supabaseUrl && supabaseUrl !== 'https://placeholder.supabase.co';
+  const hasAnonKey = supabaseAnonKey && supabaseAnonKey !== 'placeholder-anon-key';
+  
+  if (!hasUrl || !hasAnonKey) {
+    console.warn('[Supabase] 환경변수 검증 실패:', { hasUrl, hasAnonKey });
+    return false;
   }
-  return true
+  
+  console.log('[Supabase] 환경변수 검증 성공');
+  return true;
 }
 
 // 클라이언트 생성 팩토리
 function createSupabaseClient() {
-  // 환경변수 검증
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    console.warn('[Supabase] 환경변수가 설정되지 않았습니다:', {
-      url: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-      anonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    });
-    
-    // 서버 사이드에서만 null 반환
-    if (typeof window === 'undefined') {
-      return null;
-    }
-  }
-  
-  console.log('[Supabase] 클라이언트 생성 중:', {
+  console.log('[Supabase] 클라이언트 생성 시작:', {
     url: supabaseUrl,
     hasAnonKey: !!supabaseAnonKey,
+    anonKeyLength: supabaseAnonKey?.length,
     isClient: typeof window !== 'undefined'
   });
+  
+  // 환경변수 검증
+  const isValid = validateSupabaseConfig();
+  if (!isValid) {
+    console.error('[Supabase] 환경변수 검증 실패 - 클라이언트 생성 중단');
+    return null;
+  }
   
   try {
     const client = createClient<Database>(supabaseUrl, supabaseAnonKey, {

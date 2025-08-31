@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import DebugSupabase from '@/components/DebugSupabase';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -252,6 +253,9 @@ export default function LoginPage() {
           </Link>
         </div>
       </div>
+      
+      {/* 디버그 정보 (개발 환경에서만) */}
+      {process.env.NODE_ENV === 'development' && <DebugSupabase />}
     </div>
   );
 }
