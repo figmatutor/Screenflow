@@ -157,53 +157,163 @@ END $$;
 -- auth.uid()::uuid = user_id 패턴으로 모든 타입 오류 해결
 
 -- ============================================================================
--- 5. UUID 캐스팅 기반 RLS 정책 생성 (타입 안전)
+-- 5. UUID 캐스팅 기반 RLS 정책 생성 (세밀한 권한 제어)
 -- ============================================================================
 
--- Users 정책 (UUID 명시적 캐스팅으로 안전한 타입 처리)
-CREATE POLICY "users_select_own" ON public.users 
-FOR SELECT USING (auth.uid()::uuid = id);
+-- --------------------------------------------------------------------
+-- Users (owner can read, update, insert, delete own row)
+-- --------------------------------------------------------------------
+CREATE POLICY "users_select_own" ON public.users
+    FOR SELECT USING (auth.uid()::uuid = id);
 
-CREATE POLICY "users_update_own" ON public.users 
-FOR UPDATE USING (auth.uid()::uuid = id);
+CREATE POLICY "users_update_own" ON public.users
+    FOR UPDATE USING (auth.uid()::uuid = id)
+    WITH CHECK (auth.uid()::uuid = id);
 
-CREATE POLICY "users_insert_own" ON public.users 
-FOR INSERT WITH CHECK (auth.uid()::uuid = id);
+CREATE POLICY "users_insert_own" ON public.users
+    FOR INSERT WITH CHECK (auth.uid()::uuid = id);
 
--- User preferences 정책
-CREATE POLICY "user_preferences_all_own" ON public.user_preferences 
-FOR ALL USING (auth.uid()::uuid = user_id);
+CREATE POLICY "users_delete_own" ON public.users
+    FOR DELETE USING (auth.uid()::uuid = id);
 
--- Capture sessions 정책
-CREATE POLICY "capture_sessions_all_own" ON public.capture_sessions 
-FOR ALL USING (auth.uid()::uuid = user_id);
+-- --------------------------------------------------------------------
+-- User preferences (owner only)
+-- --------------------------------------------------------------------
+CREATE POLICY "prefs_select_own" ON public.user_preferences
+    FOR SELECT USING (auth.uid()::uuid = user_id);
 
--- Screenshots 정책
-CREATE POLICY "screenshots_all_own" ON public.screenshots 
-FOR ALL USING (auth.uid()::uuid = user_id);
+CREATE POLICY "prefs_update_own" ON public.user_preferences
+    FOR UPDATE USING (auth.uid()::uuid = user_id)
+    WITH CHECK (auth.uid()::uuid = user_id);
 
--- Archives 정책
-CREATE POLICY "archives_manage_own" ON public.archives 
-FOR ALL USING (auth.uid()::uuid = user_id);
+CREATE POLICY "prefs_insert_own" ON public.user_preferences
+    FOR INSERT WITH CHECK (auth.uid()::uuid = user_id);
 
-CREATE POLICY "archives_view_public" ON public.archives 
-FOR SELECT USING (is_public = true);
+CREATE POLICY "prefs_delete_own" ON public.user_preferences
+    FOR DELETE USING (auth.uid()::uuid = user_id);
 
--- Archive items 정책 (서브쿼리에서도 UUID 캐스팅)
-CREATE POLICY "archive_items_manage_own" ON public.archive_items 
-FOR ALL USING (
-    auth.uid()::uuid IN (
-        SELECT user_id FROM public.archives WHERE id = archive_id
+-- --------------------------------------------------------------------
+-- Capture sessions (owner only)
+-- --------------------------------------------------------------------
+CREATE POLICY "sessions_select_own" ON public.capture_sessions
+    FOR SELECT USING (auth.uid()::uuid = user_id);
+
+CREATE POLICY "sessions_update_own" ON public.capture_sessions
+    FOR UPDATE USING (auth.uid()::uuid = user_id)
+    WITH CHECK (auth.uid()::uuid = user_id);
+
+CREATE POLICY "sessions_insert_own" ON public.capture_sessions
+    FOR INSERT WITH CHECK (auth.uid()::uuid = user_id);
+
+CREATE POLICY "sessions_delete_own" ON public.capture_sessions
+    FOR DELETE USING (auth.uid()::uuid = user_id);
+
+-- --------------------------------------------------------------------
+-- Screenshots (owner only)
+-- --------------------------------------------------------------------
+CREATE POLICY "screenshots_select_own" ON public.screenshots
+    FOR SELECT USING (auth.uid()::uuid = user_id);
+
+CREATE POLICY "screenshots_update_own" ON public.screenshots
+    FOR UPDATE USING (auth.uid()::uuid = user_id)
+    WITH CHECK (auth.uid()::uuid = user_id);
+
+CREATE POLICY "screenshots_insert_own" ON public.screenshots
+    FOR INSERT WITH CHECK (auth.uid()::uuid = user_id);
+
+CREATE POLICY "screenshots_delete_own" ON public.screenshots
+    FOR DELETE USING (auth.uid()::uuid = user_id);
+
+-- --------------------------------------------------------------------
+-- Archives (owner can manage, public rows are readable by anyone)
+-- --------------------------------------------------------------------
+CREATE POLICY "archives_select_own" ON public.archives
+    FOR SELECT USING (auth.uid()::uuid = user_id);
+
+CREATE POLICY "archives_select_public" ON public.archives
+    FOR SELECT USING (is_public = true);
+
+CREATE POLICY "archives_update_own" ON public.archives
+    FOR UPDATE USING (auth.uid()::uuid = user_id)
+    WITH CHECK (auth.uid()::uuid = user_id);
+
+CREATE POLICY "archives_insert_own" ON public.archives
+    FOR INSERT WITH CHECK (auth.uid()::uuid = user_id);
+
+CREATE POLICY "archives_delete_own" ON public.archives
+    FOR DELETE USING (auth.uid()::uuid = user_id);
+
+-- --------------------------------------------------------------------
+-- Archive items (owner can manage items belonging to their archives)
+-- --------------------------------------------------------------------
+CREATE POLICY "archive_items_select_own" ON public.archive_items
+    FOR SELECT USING (
+        auth.uid()::uuid IN (
+            SELECT user_id FROM public.archives WHERE id = archive_id
+        )
+    );
+
+CREATE POLICY "archive_items_update_own" ON public.archive_items
+    FOR UPDATE USING (
+        auth.uid()::uuid IN (
+            SELECT user_id FROM public.archives WHERE id = archive_id
+        )
     )
-);
+    WITH CHECK (
+        auth.uid()::uuid IN (
+            SELECT user_id FROM public.archives WHERE id = archive_id
+        )
+    );
 
--- Recommended services 정책
-CREATE POLICY "recommended_services_view_own" ON public.recommended_services 
-FOR SELECT USING (
-    auth.uid()::uuid IN (
-        SELECT user_id FROM public.capture_sessions WHERE id = session_id
+CREATE POLICY "archive_items_insert_own" ON public.archive_items
+    FOR INSERT WITH CHECK (
+        auth.uid()::uuid IN (
+            SELECT user_id FROM public.archives WHERE id = archive_id
+        )
+    );
+
+CREATE POLICY "archive_items_delete_own" ON public.archive_items
+    FOR DELETE USING (
+        auth.uid()::uuid IN (
+            SELECT user_id FROM public.archives WHERE id = archive_id
+        )
+    );
+
+-- --------------------------------------------------------------------
+-- Recommended services (owner of the capture session can view)
+-- --------------------------------------------------------------------
+CREATE POLICY "rec_services_select_own" ON public.recommended_services
+    FOR SELECT USING (
+        auth.uid()::uuid IN (
+            SELECT user_id FROM public.capture_sessions WHERE id = session_id
+        )
+    );
+
+CREATE POLICY "rec_services_insert_own" ON public.recommended_services
+    FOR INSERT WITH CHECK (
+        auth.uid()::uuid IN (
+            SELECT user_id FROM public.capture_sessions WHERE id = session_id
+        )
+    );
+
+CREATE POLICY "rec_services_update_own" ON public.recommended_services
+    FOR UPDATE USING (
+        auth.uid()::uuid IN (
+            SELECT user_id FROM public.capture_sessions WHERE id = session_id
+        )
     )
-);
+    WITH CHECK (
+        auth.uid()::uuid IN (
+            SELECT user_id FROM public.capture_sessions WHERE id = session_id
+        )
+    );
+
+CREATE POLICY "rec_services_delete_own" ON public.recommended_services
+    FOR DELETE USING (
+        auth.uid()::uuid IN (
+            SELECT user_id FROM public.capture_sessions WHERE id = session_id
+        )
+    );
 
 -- ============================================================================
 -- 6. 인덱스 생성
@@ -288,13 +398,15 @@ FOR DELETE USING (auth.role() = 'authenticated');
 DO $$
 BEGIN
     RAISE NOTICE '✅ UUID 타입 오류 최종 해결 완료!';
-    RAISE NOTICE '🔧 UUID 명시적 캐스팅 RLS 정책으로 타입 안전성 확보';
+    RAISE NOTICE '🔧 세밀한 권한 제어 RLS 정책으로 보안 강화';
     RAISE NOTICE '📊 모든 테이블 생성 및 관계 설정 완료';
-    RAISE NOTICE '🔒 auth.uid()::uuid = user_id 방식으로 안전한 비교';
+    RAISE NOTICE '🔒 SELECT/INSERT/UPDATE/DELETE 각각 개별 정책 적용';
+    RAISE NOTICE '🔐 WITH CHECK 절로 데이터 무결성 보장';
     RAISE NOTICE '📁 스토리지 버킷 및 정책 설정 완료';
     RAISE NOTICE '⚡ 성능 최적화 인덱스 생성 완료';
-    RAISE NOTICE '🚀 서비스 배포 준비 완료!';
+    RAISE NOTICE '🚀 프로덕션 준비 완료!';
     RAISE NOTICE '';
     RAISE NOTICE '💡 모든 auth.uid() 사용 시 ::uuid 캐스팅 적용';
-    RAISE NOTICE '💡 auth.uid()::uuid = user_id 패턴으로 모든 타입 오류 해결!';
+    RAISE NOTICE '💡 세밀한 CRUD 권한 제어로 보안성 극대화';
+    RAISE NOTICE '💡 Public archives 지원으로 공유 기능 활성화';
 END $$;
