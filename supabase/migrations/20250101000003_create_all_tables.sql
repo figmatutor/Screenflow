@@ -231,33 +231,33 @@ DROP POLICY IF EXISTS "Users can manage archive items" ON public.archive_items;
 DROP POLICY IF EXISTS "Users can view recommendations for own sessions" ON public.recommended_services;
 
 -- Users policies
-CREATE POLICY "Users can view own profile" ON public.users FOR SELECT USING (auth.uid() = id::uuid);
-CREATE POLICY "Users can update own profile" ON public.users FOR UPDATE USING (auth.uid() = id::uuid);
-CREATE POLICY "Users can insert own profile" ON public.users FOR INSERT WITH CHECK (auth.uid() = id::uuid);
+CREATE POLICY "Users can view own profile" ON public.users FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "Users can update own profile" ON public.users FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Users can insert own profile" ON public.users FOR INSERT WITH CHECK (auth.uid() = id);
 
 -- User preferences policies
-CREATE POLICY "Users can manage own preferences" ON public.user_preferences FOR ALL USING (auth.uid() = user_id::uuid);
+CREATE POLICY "Users can manage own preferences" ON public.user_preferences FOR ALL USING (auth.uid() = user_id);
 
 -- Capture sessions policies
-CREATE POLICY "Users can manage own capture sessions" ON public.capture_sessions FOR ALL USING (auth.uid() = user_id::uuid);
+CREATE POLICY "Users can manage own capture sessions" ON public.capture_sessions FOR ALL USING (auth.uid() = user_id);
 
 -- Screenshots policies
-CREATE POLICY "Users can manage own screenshots" ON public.screenshots FOR ALL USING (auth.uid() = user_id::uuid);
+CREATE POLICY "Users can manage own screenshots" ON public.screenshots FOR ALL USING (auth.uid() = user_id);
 
 -- Archives policies
-CREATE POLICY "Users can manage own archives" ON public.archives FOR ALL USING (auth.uid() = user_id::uuid);
+CREATE POLICY "Users can manage own archives" ON public.archives FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "Anyone can view public archives" ON public.archives FOR SELECT USING (is_public = true);
 
 -- Archive items policies
 CREATE POLICY "Users can manage archive items" ON public.archive_items FOR ALL USING (
-    auth.uid()::uuid IN (
+    auth.uid() IN (
         SELECT user_id FROM public.archives WHERE id = archive_id
     )
 );
 
 -- Recommended services policies
 CREATE POLICY "Users can view recommendations for own sessions" ON public.recommended_services FOR SELECT USING (
-    auth.uid()::uuid IN (
+    auth.uid() IN (
         SELECT user_id FROM public.capture_sessions WHERE id = session_id
     )
 );
