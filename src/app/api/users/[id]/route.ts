@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin, User } from '@/lib/supabase'
+import { supabaseAdmin, Database } from '@/lib/supabase'
+
+type User = Database['public']['Tables']['users']['Row']
 
 // GET: 특정 사용자 조회
 export async function GET(request: NextRequest, { params }: any) {
@@ -60,10 +62,10 @@ export async function PUT(request: NextRequest, { params }: any) {
     const resolvedParams = await Promise.resolve(params)
     const { id } = resolvedParams
     const body = await request.json()
-    const { email, name } = body as Pick<User, 'email' | 'name'>
+    const { email, display_name } = body as Pick<User, 'email' | 'display_name'>
 
     // 입력 검증
-    if (!email && !name) {
+    if (!email && !display_name) {
       return NextResponse.json(
         { error: '수정할 데이터가 없습니다.' },
         { status: 400 }
@@ -76,7 +78,7 @@ export async function PUT(request: NextRequest, { params }: any) {
     }
 
     if (email) updateData.email = email
-    if (name) updateData.name = name
+    if (display_name) updateData.display_name = display_name
 
     // 이메일 중복 확인 (다른 사용자와의 중복)
     if (email) {

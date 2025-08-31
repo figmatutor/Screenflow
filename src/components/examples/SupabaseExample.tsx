@@ -4,11 +4,13 @@ import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
-import { supabase, User } from '@/lib/supabase'
+import { supabase, Database } from '@/lib/supabase'
+
+type User = Database['public']['Tables']['users']['Row']
 
 export function SupabaseExample() {
   const [users, setUsers] = useState<User[]>([])
-  const [newUser, setNewUser] = useState({ email: '', name: '' })
+  const [newUser, setNewUser] = useState({ email: '', display_name: '' })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -36,7 +38,7 @@ export function SupabaseExample() {
 
   // 새 사용자 생성
   const createUser = async () => {
-    if (!newUser.email || !newUser.name) {
+    if (!newUser.email || !newUser.display_name) {
       setError('이메일과 이름을 모두 입력해주세요.')
       return
     }
@@ -63,7 +65,7 @@ export function SupabaseExample() {
       await fetchUsers()
       
       // 입력 필드 초기화
-      setNewUser({ email: '', name: '' })
+      setNewUser({ email: '', display_name: '' })
       
       alert('사용자가 성공적으로 생성되었습니다!')
 
@@ -162,13 +164,13 @@ export function SupabaseExample() {
           <Input
             type="text"
             placeholder="사용자 이름"
-            value={newUser.name}
-            onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+            value={newUser.display_name}
+            onChange={(e) => setNewUser({ ...newUser, display_name: e.target.value })}
             disabled={loading}
           />
           <Button 
             onClick={createUser}
-            disabled={loading || !newUser.email || !newUser.name}
+            disabled={loading || !newUser.email || !newUser.display_name}
           >
             {loading ? '생성 중...' : '사용자 생성'}
           </Button>
@@ -198,7 +200,7 @@ export function SupabaseExample() {
                 className="flex justify-between items-center p-4 border rounded-lg hover:bg-gray-50"
               >
                 <div>
-                  <p className="font-medium">{user.name}</p>
+                  <p className="font-medium">{user.display_name}</p>
                   <p className="text-sm text-gray-600">{user.email}</p>
                   <p className="text-xs text-gray-400">
                     생성일: {user.created_at ? new Date(user.created_at).toLocaleString() : '알 수 없음'}

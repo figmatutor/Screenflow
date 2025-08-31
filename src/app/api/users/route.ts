@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase, supabaseAdmin, User } from '@/lib/supabase'
+import { supabase, supabaseAdmin, Database } from '@/lib/supabase'
+
+type User = Database['public']['Tables']['users']['Row']
 
 // GET: 모든 사용자 조회
 export async function GET(request: NextRequest) {
@@ -58,12 +60,12 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { email, name } = body as Pick<User, 'email' | 'name'>
+    const { email, display_name } = body as Pick<User, 'email' | 'display_name'>
 
     // 입력 검증
-    if (!email || !name) {
+    if (!email || !display_name) {
       return NextResponse.json(
-        { error: 'email과 name은 필수 항목입니다.' },
+        { error: 'email과 display_name은 필수 항목입니다.' },
         { status: 400 }
       )
     }
@@ -88,7 +90,7 @@ export async function POST(request: NextRequest) {
       .insert([
         {
           email,
-          name,
+          display_name,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         }

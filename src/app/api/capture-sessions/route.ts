@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin, CaptureSession } from '@/lib/supabase'
+import { supabaseAdmin, Database } from '@/lib/supabase'
+
+type CaptureSession = Database['public']['Tables']['capture_sessions']['Row']
 
 // GET: 캡처 세션 목록 조회
 export async function GET(request: NextRequest) {
@@ -70,12 +72,12 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { session_id, url, user_id, status = 'processing' } = body as Partial<CaptureSession>
+    const { id, url, user_id, status = 'processing' } = body as Partial<CaptureSession>
 
     // 입력 검증
-    if (!session_id || !url) {
+    if (!id || !url) {
       return NextResponse.json(
-        { error: 'session_id와 url은 필수 항목입니다.' },
+        { error: 'id와 url은 필수 항목입니다.' },
         { status: 400 }
       )
     }
@@ -85,7 +87,7 @@ export async function POST(request: NextRequest) {
       .from('capture_sessions')
       .insert([
         {
-          session_id,
+          id,
           url,
           user_id,
           status,
