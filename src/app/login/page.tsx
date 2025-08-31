@@ -60,8 +60,32 @@ export default function LoginPage() {
   };
 
   const handleKakaoLogin = async () => {
-    // 카카오 로그인 구현 (향후 추가)
-    setError('카카오 로그인은 준비 중입니다.');
+    if (!supabase) {
+      setError('로그인 서비스를 사용할 수 없습니다.');
+      return;
+    }
+    
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'kakao',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
+      });
+
+      if (error) {
+        console.error('카카오 로그인 오류:', error);
+        setError('카카오 로그인 중 오류가 발생했습니다.');
+      }
+    } catch (err) {
+      console.error('카카오 로그인 예외:', err);
+      setError('카카오 로그인 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -165,11 +189,12 @@ export default function LoginPage() {
           {/* 카카오 로그인 */}
           <button
             onClick={handleKakaoLogin}
-            className="w-full py-3 bg-yellow-400 text-black font-medium rounded-lg hover:bg-yellow-500 transition-colors flex items-center justify-center gap-2"
+            disabled={isLoading}
+            className="w-full py-3 bg-yellow-400 text-black font-medium rounded-lg hover:bg-yellow-500 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <div className="w-5 h-5 bg-black rounded-full flex items-center justify-center">
-              <span className="text-yellow-400 text-xs font-bold">💬</span>
-            </div>
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 3C7.03 3 3 6.14 3 10.1c0 2.52 1.65 4.77 4.15 6.08l-1.09 4.02c-.06.22.18.39.37.27l4.42-2.93c.38.04.77.06 1.15.06 4.97 0 9-3.14 9-7.1S16.97 3 12 3z"/>
+            </svg>
             카카오로 시작하기
           </button>
         </div>

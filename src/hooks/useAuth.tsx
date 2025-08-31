@@ -12,6 +12,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, data?: any) => Promise<{ error: Error | null }>;
+  signInWithKakao: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<{ error: Error | null }>;
 }
 
@@ -114,6 +115,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const signInWithKakao = async () => {
+    if (!supabase) return { error: new Error('Supabase client not available') };
+
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'kakao',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
+      });
+
+      return { error };
+    } catch (err) {
+      return { error: err as Error };
+    }
+  };
+
   const signOut = async () => {
     if (!supabase) return { error: new Error('Supabase client not available') };
 
@@ -142,6 +160,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated, 
         signIn, 
         signUp, 
+        signInWithKakao,
         signOut 
       }}
     >
