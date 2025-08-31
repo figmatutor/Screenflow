@@ -5,7 +5,7 @@ import chromium from '@sparticuz/chromium';
  * Vercel과 로컬 환경 모두에서 작동하는 브라우저 런처
  */
 export class BrowserLauncher {
-  static async launch(): Promise<Browser> {
+  static async launch(viewportWidth?: number, viewportHeight?: number): Promise<Browser> {
     console.log(`[BrowserLauncher] 브라우저 초기화 시작`);
     
     try {
@@ -51,7 +51,10 @@ export class BrowserLauncher {
             '--single-process', // Vercel에서 안정성 향상
             '--disable-features=VizDisplayCompositor'
           ],
-          defaultViewport: { width: 800, height: 600 },
+          defaultViewport: { 
+            width: viewportWidth || 1440, 
+            height: viewportHeight || 900 
+          },
           executablePath,
           headless: true,
           timeout: 30000 // 30초 타임아웃
@@ -118,7 +121,10 @@ export class BrowserLauncher {
             '--disable-backgrounding-occluded-windows',
             '--disable-renderer-backgrounding'
           ],
-          defaultViewport: null
+          defaultViewport: { 
+            width: viewportWidth || 1440, 
+            height: viewportHeight || 900 
+          }
         });
       }
     } catch (error) {
@@ -129,6 +135,6 @@ export class BrowserLauncher {
 }
 
 // 기존 함수도 유지 (하위 호환성)
-export async function launchBrowser(): Promise<Browser> {
-  return BrowserLauncher.launch();
+export async function launchBrowser(viewportWidth?: number, viewportHeight?: number): Promise<Browser> {
+  return BrowserLauncher.launch(viewportWidth, viewportHeight);
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import chromium from '@sparticuz/chromium';
 import puppeteer from 'puppeteer-core';
 import JSZip from 'jszip';
+import { launchBrowser } from '@/lib/browser-launcher';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
 
     try {
       // Puppeteer 브라우저 실행
-      browser = await launchBrowser(viewport);
+      browser = await launchBrowser(viewport.width, viewport.height);
       const page = await browser.newPage();
       
       // Anti-detection 설정

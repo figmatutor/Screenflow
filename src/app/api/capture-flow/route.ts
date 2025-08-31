@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import chromium from '@sparticuz/chromium';
-import puppeteer from 'puppeteer-core';
 import JSZip from 'jszip';
-import fs from 'fs';
+import { launchBrowser } from '@/lib/browser-launcher';
 
 interface CaptureFlowOptions {
   maxClicks?: number;
@@ -30,7 +28,7 @@ export async function POST(request: NextRequest) {
     console.log(`[Capture Flow] 플로우 캡처 시작: ${url} (maxClicks: ${maxClicks})`);
 
     // Puppeteer 브라우저 실행
-    const browser = await launchBrowser();
+    const browser = await launchBrowser(1280, 720);
     const page = await browser.newPage();
     
     try {
@@ -177,98 +175,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Puppeteer 브라우저 실행 함수
-async function launchBrowser() {
-  const isVercel = process.env.VERCEL === '1' || 
-                  process.env.AWS_LAMBDA_FUNCTION_NAME ||
-                  process.env.NODE_ENV === 'production';
-
-  console.log(`[Capture Flow] 환경: ${isVercel ? 'Serverless' : 'Local'}`);
-
-  if (isVercel) {
-    // Vercel 환경에서는 @sparticuz/chromium 사용
-    console.log(`[Capture Flow] Serverless 환경 - @sparticuz/chromium 사용`);
-    
-    const executablePath = await chromium.executablePath();
-    console.log(`[Capture Flow] Executable path: ${executablePath}`);
-
-    return await puppeteer.launch({
-      args: [
-        ...chromium.args,
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--disable-gpu',
-        '--single-process',
-        '--disable-features=VizDisplayCompositor',
-        // Bot detection 방지
-        '--disable-blink-features=AutomationControlled',
-        '--disable-web-security',
-        '--allow-running-insecure-content'
-      ],
-      executablePath,
-      headless: true,
-      defaultViewport: { width: 1280, height: 720 },
-      timeout: 30000
-    });
-  } else {
-    // 로컬 환경에서는 시스템 Chrome 사용
-    console.log(`[Capture Flow] 로컬 환경 - 시스템 Chrome 사용`);
-    
-    // 로컬 Chrome 경로 자동 감지
-    const possiblePaths = [
-      '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', // macOS
-      '/usr/bin/google-chrome-stable', // Linux
-      '/usr/bin/google-chrome', // Linux
-      'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', // Windows
-      'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe', // Windows 32-bit
-    ];
-    
-    let executablePath = process.env.CHROME_EXECUTABLE_PATH;
-    
-    if (!executablePath) {
-      for (const path of possiblePaths) {
-        try {
-          if (fs.existsSync(path)) {
-            executablePath = path;
-            console.log(`[Capture Flow] Chrome 경로 발견: ${path}`);
-            break;
-          }
-        } catch (err) {
-          // 경로 확인 실패 시 다음 경로 시도
-        }
-      }
-    }
-    
-    if (!executablePath) {
-      throw new Error('Chrome 실행 파일을 찾을 수 없습니다. CHROME_EXECUTABLE_PATH 환경변수를 설정하거나 Chrome을 설치해주세요.');
-    }
-    
-    return await puppeteer.launch({
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--disable-gpu',
-        // Bot detection 방지
-        '--disable-blink-features=AutomationControlled',
-        '--disable-web-security',
-        '--allow-running-insecure-content'
-      ],
-      defaultViewport: { width: 1280, height: 720 },
-      executablePath,
-      timeout: 30000
-    });
-  }
-}
-
 // Anti-detection 설정
 async function setupAntiDetection(page: any) {
   try {
@@ -279,38 +185,35 @@ async function setupAntiDetection(page: any) {
 
     // HTTP 헤더 설정
     await page.setExtraHTTPHeaders({
-      'Accept-Language': 'ko-KR,ko;q=0.9,en;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.9',
       'Accept-Encoding': 'gzip, deflate, br',
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-      'Cache-Control': 'no-cache',
-      'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
-      'Sec-Ch-Ua-Mobile': '?0',
-      'Sec-Ch-Ua-Platform': '"macOS"',
-      'Sec-Fetch-Dest': 'document',
-      'Sec-Fetch-Mode': 'navigate',
-      'Sec-Fetch-Site': 'none',
-      'Sec-Fetch-User': '?1',
-      'Upgrade-Insecure-Requests': '1'
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
     });
 
-    // Automation 감지 방지
+    // navigator.webdriver 숨기기
     await page.evaluateOnNewDocument(() => {
+      // webdriver 속성 제거
       Object.defineProperty(navigator, 'webdriver', {
         get: () => undefined,
       });
 
+      // 플러그인 정보 수정
+      Object.defineProperty(navigator, 'plugins', {
+        get: () => [1, 2, 3, 4, 5],
+      });
+
+      // 언어 설정
       Object.defineProperty(navigator, 'languages', {
-        get: () => ['ko-KR', 'ko', 'en'],
+        get: () => ['en-US', 'en'],
       });
     });
 
-    console.log(`[Capture Flow] Anti-detection 설정 완료`);
-  } catch (error: any) {
-    console.warn(`[Capture Flow] Anti-detection 설정 중 오류 (계속 진행): ${error.message}`);
+    console.log('[Capture Flow] Anti-detection 설정 완료');
+  } catch (error) {
+    console.warn('[Capture Flow] Anti-detection 설정 실패:', error);
   }
 }
 
-// OPTIONS 메서드 (CORS 처리)
 export async function OPTIONS() {
   return new NextResponse(null, {
     status: 200,
