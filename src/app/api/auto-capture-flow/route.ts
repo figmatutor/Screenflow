@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
       // [4] ZIP 생성
       console.log(`[Auto Capture Flow] ZIP 파일 생성 중... (${screenshots.length}개 파일)`);
       const zipBuffer = await zip.generateAsync({ 
-        type: 'nodebuffer',
+        type: 'uint8array',
         compression: 'DEFLATE',
         compressionOptions: { level: 6 }
       });

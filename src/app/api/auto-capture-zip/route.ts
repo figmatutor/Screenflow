@@ -201,7 +201,7 @@ export async function POST(req: NextRequest) {
 
       // 4. ZIP 압축
       console.log(`[Auto Capture ZIP] ZIP 생성 시작: ${screenshots.length}개 파일`);
-      const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' });
+      const zipBuffer = await zip.generateAsync({ type: 'uint8array' });
       
       console.log(`[Auto Capture ZIP] 완료: ${zipBuffer.length}바이트 ZIP 파일 생성`);
       

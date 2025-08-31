@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
 
     // ZIP 버퍼 생성
     const zipBuffer = await zip.generateAsync({
-      type: 'nodebuffer',
+      type: 'uint8array',
       compression: 'DEFLATE',
       compressionOptions: { level: 6 }
     });

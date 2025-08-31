@@ -328,7 +328,7 @@ export class ScreenshotCapture {
     }
     
     console.log(`[ScreenshotCapture] ZIP 파일 생성 중...`);
-    const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' });
+    const zipBuffer = await zip.generateAsync({ type: 'uint8array' });
     console.log(`[ScreenshotCapture] ZIP 파일 생성 완료: ${zipBuffer.length} bytes`);
     
     return zipBuffer;
@@ -921,7 +921,7 @@ export class ScreenshotCapture {
     }
     
     console.log(`[FlowCapture] ZIP 파일 생성 중...`);
-    const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' });
+    const zipBuffer = await zip.generateAsync({ type: 'uint8array' });
     console.log(`[FlowCapture] ZIP 파일 생성 완료: ${zipBuffer.length} bytes`);
     
     return zipBuffer;

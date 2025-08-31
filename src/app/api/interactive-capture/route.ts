@@ -183,7 +183,7 @@ export async function POST(request: NextRequest) {
       // ZIP 파일 생성
       console.log(`[Interactive Capture] ZIP 생성 중... (${screenshots.length}개 스크린샷)`);
       const zipBuffer = await zip.generateAsync({ 
-        type: 'nodebuffer',
+        type: 'uint8array',
         compression: 'DEFLATE',
         compressionOptions: { level: 9 }
       });

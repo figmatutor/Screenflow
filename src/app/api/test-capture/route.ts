@@ -109,7 +109,7 @@ async function createMockZip(sessionId: string, url: string): Promise<Buffer> {
   zip.file('metadata.json', JSON.stringify(metadata, null, 2));
   zip.file('failures.txt', 'URL: ' + url + '/contact\nError: Page not found\n---');
   
-  return await zip.generateAsync({ type: 'nodebuffer' });
+  return await zip.generateAsync({ type: 'uint8array' });
 }
 
 // OPTIONS 메서드 추가 (CORS preflight 처리)

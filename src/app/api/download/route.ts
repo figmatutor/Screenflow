@@ -258,7 +258,7 @@ async function createSelectedZip(crawledPages: any[], selectedFiles: string | nu
       return null;
     }
     
-    const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' });
+    const zipBuffer = await zip.generateAsync({ type: 'uint8array' });
     console.log(`[Download API] ZIP 생성 완료: ${zipBuffer.length} bytes`);
     
     // ZIP 내용 검증

@@ -272,7 +272,7 @@ export async function POST(request: NextRequest) {
       // ZIP 파일 생성
       console.log(`[Smart Capture] ZIP 생성 중... (압축 레벨: ${compressionLevel})`);
       const zipBuffer = await zip.generateAsync({ 
-        type: 'nodebuffer',
+        type: 'uint8array',
         compression: 'DEFLATE',
         compressionOptions: { level: compressionLevel }
       });
