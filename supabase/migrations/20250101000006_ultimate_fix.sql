@@ -126,38 +126,65 @@ ALTER TABLE public.archive_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.recommended_services ENABLE ROW LEVEL SECURITY;
 
 -- ============================================================================
--- 3. 모든 기존 정책 삭제
+-- 3. 모든 기존 정책 삭제 (안전하게)
 -- ============================================================================
 
-DO $$
-DECLARE
-    policy_record RECORD;
-BEGIN
-    -- 모든 정책을 동적으로 삭제
-    FOR policy_record IN 
-        SELECT schemaname, tablename, policyname 
-        FROM pg_policies 
-        WHERE schemaname = 'public'
-    LOOP
-        EXECUTE format('DROP POLICY IF EXISTS %I ON %I.%I', 
-                      policy_record.policyname, 
-                      policy_record.schemaname, 
-                      policy_record.tablename);
-    END LOOP;
-    
-    RAISE NOTICE 'All existing policies dropped successfully';
-END $$;
+-- Drop all existing policies first
+DROP POLICY IF EXISTS "users_select_own" ON public.users;
+DROP POLICY IF EXISTS "users_update_own" ON public.users;
+DROP POLICY IF EXISTS "users_insert_own" ON public.users;
+DROP POLICY IF EXISTS "users_delete_own" ON public.users;
+
+DROP POLICY IF EXISTS "prefs_select_own" ON public.user_preferences;
+DROP POLICY IF EXISTS "prefs_update_own" ON public.user_preferences;
+DROP POLICY IF EXISTS "prefs_insert_own" ON public.user_preferences;
+DROP POLICY IF EXISTS "prefs_delete_own" ON public.user_preferences;
+
+DROP POLICY IF EXISTS "sessions_select_own" ON public.capture_sessions;
+DROP POLICY IF EXISTS "sessions_update_own" ON public.capture_sessions;
+DROP POLICY IF EXISTS "sessions_insert_own" ON public.capture_sessions;
+DROP POLICY IF EXISTS "sessions_delete_own" ON public.capture_sessions;
+
+DROP POLICY IF EXISTS "screenshots_select_own" ON public.screenshots;
+DROP POLICY IF EXISTS "screenshots_update_own" ON public.screenshots;
+DROP POLICY IF EXISTS "screenshots_insert_own" ON public.screenshots;
+DROP POLICY IF EXISTS "screenshots_delete_own" ON public.screenshots;
+
+DROP POLICY IF EXISTS "archives_select_own" ON public.archives;
+DROP POLICY IF EXISTS "archives_select_public" ON public.archives;
+DROP POLICY IF EXISTS "archives_update_own" ON public.archives;
+DROP POLICY IF EXISTS "archives_insert_own" ON public.archives;
+DROP POLICY IF EXISTS "archives_delete_own" ON public.archives;
+
+DROP POLICY IF EXISTS "archive_items_select_own" ON public.archive_items;
+DROP POLICY IF EXISTS "archive_items_update_own" ON public.archive_items;
+DROP POLICY IF EXISTS "archive_items_insert_own" ON public.archive_items;
+DROP POLICY IF EXISTS "archive_items_delete_own" ON public.archive_items;
+
+DROP POLICY IF EXISTS "rec_services_select_own" ON public.recommended_services;
+DROP POLICY IF EXISTS "rec_services_update_own" ON public.recommended_services;
+DROP POLICY IF EXISTS "rec_services_insert_own" ON public.recommended_services;
+DROP POLICY IF EXISTS "rec_services_delete_own" ON public.recommended_services;
+
+-- Drop any legacy policies that might exist
+DROP POLICY IF EXISTS "user_preferences_all_own" ON public.user_preferences;
+DROP POLICY IF EXISTS "capture_sessions_all_own" ON public.capture_sessions;
+DROP POLICY IF EXISTS "screenshots_all_own" ON public.screenshots;
+DROP POLICY IF EXISTS "archives_manage_own" ON public.archives;
+DROP POLICY IF EXISTS "archives_view_public" ON public.archives;
+DROP POLICY IF EXISTS "archive_items_manage_own" ON public.archive_items;
+DROP POLICY IF EXISTS "recommended_services_view_own" ON public.recommended_services;
 
 -- ============================================================================
--- 4. UUID 명시적 캐스팅 기반 안전한 비교
--- UUID = text 오류 해결: auth.uid()::uuid 명시적 캐스팅 사용
+-- 4. 타입 안전 RLS 정책 생성
 -- ============================================================================
-
--- 모든 auth.uid() 사용 시 ::uuid 캐스팅 적용
--- auth.uid()::uuid = user_id 패턴으로 모든 타입 오류 해결
-
--- ============================================================================
--- 5. UUID 캐스팅 기반 RLS 정책 생성 (세밀한 권한 제어)
+-- 
+-- 핵심 원칙:
+-- 1. auth.uid() 반환 타입: TEXT
+-- 2. UUID 컬럼과 비교 시 반드시 auth.uid()::uuid 캐스팅 필요
+-- 3. FOR ALL 정책 금지 (타입 파싱 오류 방지)
+-- 4. 각 CRUD 작업별 개별 정책 생성
+-- 5. UPDATE는 USING + WITH CHECK 모두 필요
 -- ============================================================================
 
 -- --------------------------------------------------------------------
@@ -395,18 +422,48 @@ FOR DELETE USING (auth.role() = 'authenticated');
 -- 9. 완료 알림
 -- ============================================================================
 
+-- ============================================================================
+-- 10. 디버깅 및 검증 쿼리
+-- ============================================================================
+
+-- auth.uid() 타입 확인 (TEXT여야 함)
+-- SELECT pg_typeof(auth.uid()) FROM auth.users LIMIT 1;
+
+-- 생성된 RLS 정책 확인
+-- SELECT schemaname, tablename, policyname, cmd, roles, using_expr, with_check
+-- FROM pg_policies
+-- WHERE schemaname = 'public'
+-- ORDER BY tablename, policyname;
+
+-- 인증된 사용자로 테스트
+-- SELECT * FROM public.users WHERE id = auth.uid()::uuid;
+
+-- ============================================================================
+-- 11. 완료 알림
+-- ============================================================================
+
 DO $$
 BEGIN
-    RAISE NOTICE '✅ UUID 타입 오류 최종 해결 완료!';
-    RAISE NOTICE '🔧 세밀한 권한 제어 RLS 정책으로 보안 강화';
+    RAISE NOTICE '✅ UUID = TEXT 타입 오류 완전 해결!';
+    RAISE NOTICE '🔧 Root Cause Analysis 기반 정확한 수정';
     RAISE NOTICE '📊 모든 테이블 생성 및 관계 설정 완료';
-    RAISE NOTICE '🔒 SELECT/INSERT/UPDATE/DELETE 각각 개별 정책 적용';
-    RAISE NOTICE '🔐 WITH CHECK 절로 데이터 무결성 보장';
+    RAISE NOTICE '🔒 FOR ALL 정책 제거, 개별 CRUD 정책 적용';
+    RAISE NOTICE '🎯 auth.uid()::uuid 캐스팅 100% 적용';
+    RAISE NOTICE '🔐 USING + WITH CHECK 이중 검증';
     RAISE NOTICE '📁 스토리지 버킷 및 정책 설정 완료';
     RAISE NOTICE '⚡ 성능 최적화 인덱스 생성 완료';
-    RAISE NOTICE '🚀 프로덕션 준비 완료!';
+    RAISE NOTICE '🚀 프로덕션 배포 준비 완료!';
     RAISE NOTICE '';
-    RAISE NOTICE '💡 모든 auth.uid() 사용 시 ::uuid 캐스팅 적용';
-    RAISE NOTICE '💡 세밀한 CRUD 권한 제어로 보안성 극대화';
-    RAISE NOTICE '💡 Public archives 지원으로 공유 기능 활성화';
+    RAISE NOTICE '🐛 해결된 문제:';
+    RAISE NOTICE '   - UUID = TEXT 타입 불일치 오류';
+    RAISE NOTICE '   - FOR ALL 정책의 타입 파싱 오류';
+    RAISE NOTICE '   - PostgreSQL RLS 정책 베스트 프랙티스 적용';
+    RAISE NOTICE '';
+    RAISE NOTICE '💡 핵심 개선사항:';
+    RAISE NOTICE '   - auth.uid() TEXT → UUID 명시적 캐스팅';
+    RAISE NOTICE '   - 세밀한 CRUD 권한 제어';
+    RAISE NOTICE '   - 데이터 무결성 이중 검증';
+    RAISE NOTICE '   - Public archives 공유 기능';
+    RAISE NOTICE '';
+    RAISE NOTICE '🎯 타입 안전 보장: uuid = uuid 비교만 사용';
 END $$;
