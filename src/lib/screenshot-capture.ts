@@ -1,6 +1,6 @@
 import { CrawledPage } from "./auto-capture-crawler";
 import { Browser, Page } from 'puppeteer-core';
-import { BrowserLauncher } from './browser-launcher';
+import { launchBrowser } from './browser-launcher';
 import JSZip from 'jszip';
 
 export interface CaptureResult {
@@ -97,7 +97,7 @@ export class ScreenshotCapture {
     console.log(`[ScreenshotCapture] 브라우저 초기화 시작`);
     
     try {
-      this.browser = await BrowserLauncher.launch();
+      this.browser = await launchBrowser();
       console.log(`[ScreenshotCapture] 브라우저 초기화 완료`);
     } catch (error) {
       console.error(`[ScreenshotCapture] 브라우저 초기화 실패:`, error);

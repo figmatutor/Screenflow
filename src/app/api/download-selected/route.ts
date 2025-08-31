@@ -67,8 +67,9 @@ export async function POST(request: NextRequest) {
     const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
     const filename = `selected_screenshots_${timestamp}.zip`;
 
-    // 응답 헤더 설정
-    const response = new NextResponse(zipBuffer, {
+    // 응답 헤더 설정 - Buffer를 Blob으로 변환
+    const blob = new Blob([zipBuffer], { type: 'application/zip' });
+    const response = new NextResponse(blob, {
       status: 200,
       headers: {
         'Content-Type': 'application/zip',

@@ -1,5 +1,5 @@
 import { Browser, Page } from 'puppeteer-core';
-import { BrowserLauncher } from './browser-launcher';
+import { launchBrowser } from './browser-launcher';
 import JSZip from 'jszip';
 import { DiscoveredLink } from './link-discovery';
 
@@ -38,7 +38,7 @@ export class SelectiveCapture {
     console.log(`[SelectiveCapture] 브라우저 초기화 시작`);
     
     try {
-      this.browser = await BrowserLauncher.launch();
+      this.browser = await launchBrowser();
       console.log(`[SelectiveCapture] 브라우저 초기화 완료`);
     } catch (error) {
       console.error(`[SelectiveCapture] 브라우저 초기화 실패:`, error);

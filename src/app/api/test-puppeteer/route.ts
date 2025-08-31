@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { BrowserLauncher } from '@/lib/browser-launcher';
+import { launchBrowser } from '@/lib/browser-launcher';
 import { createSuccessResponse, createErrorResponse, createOptionsResponse } from '@/lib/api-utils';
 
 export async function GET() {
   try {
     console.log('[Test Puppeteer] 브라우저 테스트 시작');
     
-    const browser = await BrowserLauncher.launch();
+    const browser = await launchBrowser();
     console.log('[Test Puppeteer] 브라우저 초기화 성공');
     
     const page = await browser.newPage();

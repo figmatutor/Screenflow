@@ -90,7 +90,8 @@ export async function GET(request: NextRequest) {
           return NextResponse.json({ error: 'Failed to create ZIP file' }, { status: 500 });
         }
         
-        const response = new NextResponse(zipBuffer as unknown as BodyInit);
+        const blob = new Blob([zipBuffer], { type: 'application/zip' });
+        const response = new NextResponse(blob);
         response.headers.set('Content-Type', 'application/zip');
         response.headers.set('Content-Disposition', `attachment; filename="auto_capture_${sessionId}.zip"`);
         response.headers.set('Content-Length', zipBuffer.length.toString());
@@ -109,7 +110,8 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'No data available' }, { status: 404 });
       }
       
-      const response = new NextResponse(zipBuffer as unknown as BodyInit);
+      const blob = new Blob([zipBuffer], { type: 'application/zip' });
+      const response = new NextResponse(blob);
       response.headers.set('Content-Type', 'application/zip');
       
       // 세션 ID로 파일명 결정
