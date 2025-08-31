@@ -125,7 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         provider: 'kakao',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
-          scopes: 'profile_nickname profile_image account_email'
+          scopes: 'openid profile_nickname profile_image account_email'
         }
       });
 

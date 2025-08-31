@@ -47,7 +47,8 @@ export default function AuthCallback() {
                 id: user.id,
                 email: user.email,
                 provider: user.app_metadata?.provider,
-                user_metadata: user.user_metadata
+                user_metadata: user.user_metadata,
+                identities: user.identities
               });
 
               const { data: existingUser, error: userError } = await supabase
@@ -61,10 +62,15 @@ export default function AuthCallback() {
                 const displayName = user.user_metadata?.full_name || 
                                   user.user_metadata?.name || 
                                   user.user_metadata?.nickname ||
+                                  user.user_metadata?.preferred_username ||
                                   user.email?.split('@')[0] || 
-                                  '사용자';
+                                  '카카오 사용자';
 
-                console.log('[Auth Callback] 새 사용자 생성:', { displayName });
+                console.log('[Auth Callback] 새 사용자 생성:', { 
+                  displayName,
+                  provider: user.app_metadata?.provider,
+                  kakaoId: user.user_metadata?.sub || user.user_metadata?.provider_id
+                });
 
                 const { error: insertError } = await supabase
                   .from('users')
@@ -85,6 +91,23 @@ export default function AuthCallback() {
                 }
               } else if (existingUser) {
                 console.log('[Auth Callback] 기존 사용자 로그인:', existingUser.display_name);
+                
+                // 기존 사용자의 정보 업데이트 (필요시)
+                if (user.user_metadata?.nickname && existingUser.display_name !== user.user_metadata.nickname) {
+                  const { error: updateError } = await supabase
+                    .from('users')
+                    .update({
+                      display_name: user.user_metadata.nickname,
+                      updated_at: new Date().toISOString()
+                    })
+                    .eq('id', user.id);
+
+                  if (updateError) {
+                    console.error('[Auth Callback] 사용자 정보 업데이트 오류:', updateError);
+                  } else {
+                    console.log('[Auth Callback] 사용자 정보 업데이트 완료');
+                  }
+                }
               }
             } catch (userProcessError) {
               console.error('사용자 정보 처리 오류:', userProcessError);

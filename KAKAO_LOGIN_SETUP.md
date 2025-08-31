@@ -23,9 +23,15 @@ https://screenflow.pro/auth/callback   (프로덕션용)
 **경로:** 카카오 로그인 → 동의항목
 
 **필수 설정:**
-- ✅ 닉네임 (profile_nickname)
-- ✅ 프로필 사진 (profile_image) 
-- ✅ 카카오계정(이메일) (account_email)
+- ✅ OpenID Connect (openid) - 기본 식별자
+- ✅ 닉네임 (profile_nickname) - 사용자 표시명
+- ✅ 프로필 사진 (profile_image) - 아바타 이미지
+- ✅ 카카오계정(이메일) (account_email) - 연락처 정보
+
+**권장 설정:**
+- 📧 이메일 주소 수집 동의 (필수 또는 선택)
+- 👤 닉네임 수집 동의 (필수)
+- 🖼️ 프로필 사진 수집 동의 (선택)
 
 ### 2. Supabase 대시보드 설정
 
@@ -77,8 +83,14 @@ curl http://localhost:3001/api/check-kakao-config
 ### 스코프 설정
 현재 요청하는 스코프:
 ```javascript
-scopes: 'profile_nickname profile_image account_email'
+scopes: 'openid profile_nickname profile_image account_email'
 ```
+
+**스코프 설명:**
+- `openid`: OpenID Connect 표준 식별자 (필수)
+- `profile_nickname`: 카카오 닉네임 정보
+- `profile_image`: 프로필 이미지 URL
+- `account_email`: 카카오계정 이메일 주소
 
 ## 🔍 문제 해결
 
