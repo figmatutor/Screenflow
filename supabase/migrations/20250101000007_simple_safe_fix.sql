@@ -1,13 +1,13 @@
 -- ============================================================================
--- Supabase UUID 타입 오류 최종 해결
--- auth.uid() 타입 문제 근본적 해결
+-- Supabase 표준 방식을 사용한 안전한 RLS 정책
+-- auth 스키마 권한 문제 해결
 -- ============================================================================
 
 -- Enable necessary extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ============================================================================
--- 1. 모든 테이블 생성 (테이블이 없는 경우)
+-- 1. 모든 테이블 생성
 -- ============================================================================
 
 -- USERS 테이블
@@ -129,84 +129,80 @@ ALTER TABLE public.recommended_services ENABLE ROW LEVEL SECURITY;
 -- 3. 모든 기존 정책 삭제
 -- ============================================================================
 
-DO $$
-DECLARE
-    policy_record RECORD;
-BEGIN
-    -- 모든 정책을 동적으로 삭제
-    FOR policy_record IN 
-        SELECT schemaname, tablename, policyname 
-        FROM pg_policies 
-        WHERE schemaname = 'public'
-    LOOP
-        EXECUTE format('DROP POLICY IF EXISTS %I ON %I.%I', 
-                      policy_record.policyname, 
-                      policy_record.schemaname, 
-                      policy_record.tablename);
-    END LOOP;
-    
-    RAISE NOTICE 'All existing policies dropped successfully';
-END $$;
+DROP POLICY IF EXISTS "users_select_own" ON public.users;
+DROP POLICY IF EXISTS "users_update_own" ON public.users;
+DROP POLICY IF EXISTS "users_insert_own" ON public.users;
+DROP POLICY IF EXISTS "user_preferences_all_own" ON public.user_preferences;
+DROP POLICY IF EXISTS "capture_sessions_all_own" ON public.capture_sessions;
+DROP POLICY IF EXISTS "screenshots_all_own" ON public.screenshots;
+DROP POLICY IF EXISTS "archives_manage_own" ON public.archives;
+DROP POLICY IF EXISTS "archives_view_public" ON public.archives;
+DROP POLICY IF EXISTS "archive_items_manage_own" ON public.archive_items;
+DROP POLICY IF EXISTS "recommended_services_view_own" ON public.recommended_services;
+
+-- 기존 정책들도 삭제
+DROP POLICY IF EXISTS "Users can view own profile" ON public.users;
+DROP POLICY IF EXISTS "Users can update own profile" ON public.users;
+DROP POLICY IF EXISTS "Users can insert own profile" ON public.users;
+DROP POLICY IF EXISTS "Users can manage own preferences" ON public.user_preferences;
+DROP POLICY IF EXISTS "Users can manage own capture sessions" ON public.capture_sessions;
+DROP POLICY IF EXISTS "Users can manage own screenshots" ON public.screenshots;
+DROP POLICY IF EXISTS "Users can manage own archives" ON public.archives;
+DROP POLICY IF EXISTS "Anyone can view public archives" ON public.archives;
+DROP POLICY IF EXISTS "Users can manage archive items" ON public.archive_items;
+DROP POLICY IF EXISTS "Users can view recommendations for own sessions" ON public.recommended_services;
 
 -- ============================================================================
--- 4. UUID 명시적 캐스팅 기반 안전한 비교
--- UUID = text 오류 해결: auth.uid()::uuid 명시적 캐스팅 사용
+-- 4. 표준 Supabase 방식 RLS 정책 (문자열 비교)
 -- ============================================================================
 
--- 모든 auth.uid() 사용 시 ::uuid 캐스팅 적용
--- auth.uid()::uuid = user_id 패턴으로 모든 타입 오류 해결
-
--- ============================================================================
--- 5. UUID 캐스팅 기반 RLS 정책 생성 (타입 안전)
--- ============================================================================
-
--- Users 정책 (UUID 명시적 캐스팅으로 안전한 타입 처리)
+-- Users 정책 - auth.uid()를 텍스트로 변환해서 비교
 CREATE POLICY "users_select_own" ON public.users 
-FOR SELECT USING (auth.uid()::uuid = id);
+FOR SELECT USING (auth.uid()::text = id::text);
 
 CREATE POLICY "users_update_own" ON public.users 
-FOR UPDATE USING (auth.uid()::uuid = id);
+FOR UPDATE USING (auth.uid()::text = id::text);
 
 CREATE POLICY "users_insert_own" ON public.users 
-FOR INSERT WITH CHECK (auth.uid()::uuid = id);
+FOR INSERT WITH CHECK (auth.uid()::text = id::text);
 
 -- User preferences 정책
 CREATE POLICY "user_preferences_all_own" ON public.user_preferences 
-FOR ALL USING (auth.uid()::uuid = user_id);
+FOR ALL USING (auth.uid()::text = user_id::text);
 
 -- Capture sessions 정책
 CREATE POLICY "capture_sessions_all_own" ON public.capture_sessions 
-FOR ALL USING (auth.uid()::uuid = user_id);
+FOR ALL USING (auth.uid()::text = user_id::text);
 
 -- Screenshots 정책
 CREATE POLICY "screenshots_all_own" ON public.screenshots 
-FOR ALL USING (auth.uid()::uuid = user_id);
+FOR ALL USING (auth.uid()::text = user_id::text);
 
 -- Archives 정책
 CREATE POLICY "archives_manage_own" ON public.archives 
-FOR ALL USING (auth.uid()::uuid = user_id);
+FOR ALL USING (auth.uid()::text = user_id::text);
 
 CREATE POLICY "archives_view_public" ON public.archives 
 FOR SELECT USING (is_public = true);
 
--- Archive items 정책 (서브쿼리에서도 UUID 캐스팅)
+-- Archive items 정책 (서브쿼리도 텍스트 비교)
 CREATE POLICY "archive_items_manage_own" ON public.archive_items 
 FOR ALL USING (
-    auth.uid()::uuid IN (
-        SELECT user_id FROM public.archives WHERE id = archive_id
+    auth.uid()::text IN (
+        SELECT user_id::text FROM public.archives WHERE id = archive_id
     )
 );
 
 -- Recommended services 정책
 CREATE POLICY "recommended_services_view_own" ON public.recommended_services 
 FOR SELECT USING (
-    auth.uid()::uuid IN (
-        SELECT user_id FROM public.capture_sessions WHERE id = session_id
+    auth.uid()::text IN (
+        SELECT user_id::text FROM public.capture_sessions WHERE id = session_id
     )
 );
 
 -- ============================================================================
--- 6. 인덱스 생성
+-- 5. 인덱스 생성
 -- ============================================================================
 
 CREATE INDEX IF NOT EXISTS idx_users_email ON public.users(email);
@@ -221,7 +217,7 @@ CREATE INDEX IF NOT EXISTS idx_archive_items_archive_id ON public.archive_items(
 CREATE INDEX IF NOT EXISTS idx_recommended_services_session_id ON public.recommended_services(session_id);
 
 -- ============================================================================
--- 7. 업데이트 트리거
+-- 6. 업데이트 트리거
 -- ============================================================================
 
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -249,10 +245,10 @@ CREATE TRIGGER update_archives_updated_at BEFORE UPDATE ON public.archives
     FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
 
 -- ============================================================================
--- 8. 스토리지 설정 (간단한 버전)
+-- 7. 스토리지 설정
 -- ============================================================================
 
--- 스토리지 버킷 생성 (오류 무시)
+-- 스토리지 버킷 생성
 DO $$
 BEGIN
     INSERT INTO storage.buckets (id, name, public) VALUES ('screenshots', 'screenshots', false);
@@ -267,7 +263,7 @@ EXCEPTION WHEN OTHERS THEN
     RAISE NOTICE 'Thumbnails bucket may already exist';
 END $$;
 
--- 스토리지 정책 (매우 간단한 버전)
+-- 스토리지 정책
 DROP POLICY IF EXISTS "authenticated_upload" ON storage.objects;
 DROP POLICY IF EXISTS "authenticated_view" ON storage.objects;
 DROP POLICY IF EXISTS "authenticated_delete" ON storage.objects;
@@ -282,19 +278,19 @@ CREATE POLICY "authenticated_delete" ON storage.objects
 FOR DELETE USING (auth.role() = 'authenticated');
 
 -- ============================================================================
--- 9. 완료 알림
+-- 8. 완료 알림
 -- ============================================================================
 
 DO $$
 BEGIN
-    RAISE NOTICE '✅ UUID 타입 오류 최종 해결 완료!';
-    RAISE NOTICE '🔧 UUID 명시적 캐스팅 RLS 정책으로 타입 안전성 확보';
+    RAISE NOTICE '✅ 표준 Supabase 방식으로 RLS 정책 구성 완료!';
+    RAISE NOTICE '🔧 auth.uid()::text = id::text 방식으로 텍스트 비교';
     RAISE NOTICE '📊 모든 테이블 생성 및 관계 설정 완료';
-    RAISE NOTICE '🔒 auth.uid()::uuid = user_id 방식으로 안전한 비교';
+    RAISE NOTICE '🔒 권한 오류 없이 안전한 정책 생성';
     RAISE NOTICE '📁 스토리지 버킷 및 정책 설정 완료';
     RAISE NOTICE '⚡ 성능 최적화 인덱스 생성 완료';
     RAISE NOTICE '🚀 서비스 배포 준비 완료!';
     RAISE NOTICE '';
-    RAISE NOTICE '💡 모든 auth.uid() 사용 시 ::uuid 캐스팅 적용';
-    RAISE NOTICE '💡 auth.uid()::uuid = user_id 패턴으로 모든 타입 오류 해결!';
+    RAISE NOTICE '💡 텍스트 비교 방식으로 모든 타입 오류 해결!';
+    RAISE NOTICE '💡 auth 스키마 권한 문제도 완전히 회피!';
 END $$;

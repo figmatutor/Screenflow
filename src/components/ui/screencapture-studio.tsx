@@ -3,6 +3,7 @@
 import { useEffect, useRef, useCallback, useTransition, useMemo } from "react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 import {
     Globe,
     Settings2,
@@ -231,6 +232,9 @@ function ImagePreview({ src, alt, title, url }: ImagePreviewProps) {
 }
 
 export function ScreencaptureStudio() {
+    // 인증 상태 관리
+    const { user, loading, signOut, isAuthenticated } = useAuth();
+    
     // 성능 최적화: 모바일 및 저성능 디바이스 감지
     const isMobile = useMemo(() => {
         if (typeof window !== 'undefined') {
@@ -907,16 +911,39 @@ export function ScreencaptureStudio() {
                     </div>
                     
                     {/* 데스크탑 인증 버튼 */}
-                    <div className="hidden min-[500px]:flex items-center gap-4">
-                        <button className="text-sm text-white/60 hover:text-white/80 font-normal transition-colors">
-                            로그인
-                        </button>
-                        <button className="px-4 py-2 bg-white text-[#000000] rounded-lg text-sm font-bold hover:bg-white/90 transition-colors"
-                            style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif' }}
-                        >
-                            무료로 시작하기
-                        </button>
-                    </div>
+                    {!loading && (
+                        <div className="hidden min-[500px]:flex items-center gap-4">
+                            {isAuthenticated ? (
+                                <>
+                                    <span className="text-sm text-white/80 font-normal">
+                                        {user?.email}
+                                    </span>
+                                    <button 
+                                        onClick={signOut}
+                                        className="text-sm text-white/60 hover:text-white/80 font-normal transition-colors"
+                                    >
+                                        로그아웃
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <button 
+                                        onClick={() => window.location.href = '/login'}
+                                        className="text-sm text-white/60 hover:text-white/80 font-normal transition-colors"
+                                    >
+                                        로그인
+                                    </button>
+                                    <button 
+                                        onClick={() => window.location.href = '/register'}
+                                        className="px-4 py-2 bg-white text-[#000000] rounded-lg text-sm font-bold hover:bg-white/90 transition-colors"
+                                        style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif' }}
+                                    >
+                                        무료로 시작하기
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    )}
                     
                     {/* 모바일 햄버거 메뉴 버튼 */}
                     <button 
@@ -956,27 +983,54 @@ export function ScreencaptureStudio() {
                                 내 프로필
                             </span>
                             <div className="border-t border-white/10"></div>
-                            <div className="flex flex-col gap-3 pt-2">
-                                <button 
-                                    className="text-sm text-white/60 hover:text-white/80 font-normal text-center transition-colors"
-                                    onClick={() => setIsMobileMenuOpen(false)}
-                                >
-                                    로그인
-                                </button>
-                                <button 
-                                    className="w-full px-4 py-3 bg-white text-[#000000] rounded-lg text-sm font-bold hover:bg-white/90 transition-colors"
-                                    style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif' }}
-                                    onClick={() => setIsMobileMenuOpen(false)}
-                                >
-                                    무료로 시작하기
-                                </button>
-                            </div>
+                            {!loading && (
+                                <div className="flex flex-col gap-3 pt-2">
+                                    {isAuthenticated ? (
+                                        <>
+                                            <span className="text-sm text-white/80 font-normal text-center">
+                                                {user?.email}
+                                            </span>
+                                            <button 
+                                                className="text-sm text-white/60 hover:text-white/80 font-normal text-center transition-colors"
+                                                onClick={() => {
+                                                    setIsMobileMenuOpen(false);
+                                                    signOut();
+                                                }}
+                                            >
+                                                로그아웃
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <button 
+                                                className="text-sm text-white/60 hover:text-white/80 font-normal text-center transition-colors"
+                                                onClick={() => {
+                                                    setIsMobileMenuOpen(false);
+                                                    window.location.href = '/login';
+                                                }}
+                                            >
+                                                로그인
+                                            </button>
+                                            <button 
+                                                className="w-full px-4 py-3 bg-white text-[#000000] rounded-lg text-sm font-bold hover:bg-white/90 transition-colors"
+                                                style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif' }}
+                                                onClick={() => {
+                                                    setIsMobileMenuOpen(false);
+                                                    window.location.href = '/register';
+                                                }}
+                                            >
+                                                무료로 시작하기
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </motion.div>
                 )}
             </AnimatePresence>
 
-            <div className="w-full max-w-[calc(100%-2rem)] sm:max-w-6xl mx-auto relative mt-[69px] md:mt-[210px] px-4 md:px-6">
+            <div id="capture-section" className="w-full max-w-[calc(100%-2rem)] sm:max-w-6xl mx-auto relative mt-[69px] md:mt-[210px] px-4 md:px-6">
                 <motion.div 
                     className="relative z-10 space-y-12"
                     initial={{ opacity: 0, y: 20 }}
@@ -1392,14 +1446,24 @@ export function ScreencaptureStudio() {
                                 transition={{ duration: 0.6, delay: 0.25 }}
                             >
                                 {/* 메인 CTA 버튼만 유지 */}
-                                <motion.button
-                                    className="px-8 py-4 bg-white text-black rounded-xl font-semibold hover:bg-white/90 transition-all duration-300 shadow-lg"
-                                    whileHover={{ scale: 1.05, boxShadow: "0 10px 40px rgba(255,255,255,0.1)" }}
-                                    whileTap={{ scale: 0.98 }}
-                                    style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif' }}
-                                >
-                                    무료로 시작하기
-                                </motion.button>
+                                {!loading && (
+                                    <motion.button
+                                        onClick={() => {
+                                            if (isAuthenticated) {
+                                                // 로그인된 사용자는 캡처 섹션으로 스크롤
+                                                document.getElementById('capture-section')?.scrollIntoView({ behavior: 'smooth' });
+                                            } else {
+                                                window.location.href = '/register';
+                                            }
+                                        }}
+                                        className="px-8 py-4 bg-white text-black rounded-xl font-semibold hover:bg-white/90 transition-all duration-300 shadow-lg"
+                                        whileHover={{ scale: 1.05, boxShadow: "0 10px 40px rgba(255,255,255,0.1)" }}
+                                        whileTap={{ scale: 0.98 }}
+                                        style={{ fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif' }}
+                                    >
+                                        {isAuthenticated ? '캡처 시작하기' : '무료로 시작하기'}
+                                    </motion.button>
+                                )}
                             </motion.div>
                         </motion.div>
 

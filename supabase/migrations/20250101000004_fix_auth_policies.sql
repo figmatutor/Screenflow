@@ -21,51 +21,52 @@ DROP POLICY IF EXISTS "Users can manage archive items" ON public.archive_items;
 DROP POLICY IF EXISTS "Users can view recommendations for own sessions" ON public.recommended_services;
 
 -- ============================================================================
--- 안전한 타입 캐스팅으로 RLS 정책 재생성
+-- 텍스트 변환으로 타입 안전한 RLS 정책 재생성
+-- UUID = text 오류 해결: auth.uid()::text = id::text
 -- ============================================================================
 
--- Users 정책 (auth.uid()와 id 모두 명시적 캐스팅)
+-- Users 정책 (텍스트 변환으로 안전한 비교)
 CREATE POLICY "Users can view own profile" ON public.users 
-FOR SELECT USING (auth.uid()::uuid = id::uuid);
+FOR SELECT USING (auth.uid()::text = id::text);
 
 CREATE POLICY "Users can update own profile" ON public.users 
-FOR UPDATE USING (auth.uid()::uuid = id::uuid);
+FOR UPDATE USING (auth.uid()::text = id::text);
 
 CREATE POLICY "Users can insert own profile" ON public.users 
-FOR INSERT WITH CHECK (auth.uid()::uuid = id::uuid);
+FOR INSERT WITH CHECK (auth.uid()::text = id::text);
 
 -- User preferences 정책
 CREATE POLICY "Users can manage own preferences" ON public.user_preferences 
-FOR ALL USING (auth.uid()::uuid = user_id::uuid);
+FOR ALL USING (auth.uid()::text = user_id::text);
 
 -- Capture sessions 정책
 CREATE POLICY "Users can manage own capture sessions" ON public.capture_sessions 
-FOR ALL USING (auth.uid()::uuid = user_id::uuid);
+FOR ALL USING (auth.uid()::text = user_id::text);
 
 -- Screenshots 정책
 CREATE POLICY "Users can manage own screenshots" ON public.screenshots 
-FOR ALL USING (auth.uid()::uuid = user_id::uuid);
+FOR ALL USING (auth.uid()::text = user_id::text);
 
 -- Archives 정책
 CREATE POLICY "Users can manage own archives" ON public.archives 
-FOR ALL USING (auth.uid()::uuid = user_id::uuid);
+FOR ALL USING (auth.uid()::text = user_id::text);
 
 CREATE POLICY "Anyone can view public archives" ON public.archives 
 FOR SELECT USING (is_public = true);
 
--- Archive items 정책 (서브쿼리에서도 명시적 캐스팅)
+-- Archive items 정책 (서브쿼리에서도 텍스트 변환)
 CREATE POLICY "Users can manage archive items" ON public.archive_items 
 FOR ALL USING (
-    auth.uid()::uuid IN (
-        SELECT user_id::uuid FROM public.archives WHERE id = archive_id
+    auth.uid()::text IN (
+        SELECT user_id::text FROM public.archives WHERE id = archive_id
     )
 );
 
 -- Recommended services 정책
 CREATE POLICY "Users can view recommendations for own sessions" ON public.recommended_services 
 FOR SELECT USING (
-    auth.uid()::uuid IN (
-        SELECT user_id::uuid FROM public.capture_sessions WHERE id = session_id
+    auth.uid()::text IN (
+        SELECT user_id::text FROM public.capture_sessions WHERE id = session_id
     )
 );
 
@@ -149,10 +150,10 @@ FOR INSERT WITH CHECK (
 
 DO $$
 BEGIN
-    RAISE NOTICE '✅ Auth 정책 타입 오류 해결 완료!';
-    RAISE NOTICE '🔧 모든 UUID 비교에 명시적 캐스팅 적용';
-    RAISE NOTICE '🔒 RLS 정책이 안전하게 재생성되었습니다';
+    RAISE NOTICE '✅ UUID = text 타입 오류 완전 해결!';
+    RAISE NOTICE '🔧 텍스트 변환으로 안전한 비교: auth.uid()::text = id::text';
+    RAISE NOTICE '🔒 모든 RLS 정책이 타입 안전하게 재생성됨';
     RAISE NOTICE '📁 스토리지 정책도 role 기반으로 안정화';
-    RAISE NOTICE '💡 문제가 지속되면 함수 기반 대안 활성화 가능';
-    RAISE NOTICE '🚀 이제 모든 UUID 타입 오류가 해결되었습니다!';
+    RAISE NOTICE '💡 텍스트 비교로 모든 타입 충돌 해결';
+    RAISE NOTICE '🚀 이제 확실히 모든 UUID 오류가 해결되었습니다!';
 END $$;

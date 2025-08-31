@@ -25,6 +25,8 @@ export interface Database {
           subscription_tier: 'free' | 'pro' | 'enterprise'
           storage_used: number
           storage_limit: number
+          birth: string | null
+          address: string | null
         }
         Insert: {
           id: string
@@ -36,6 +38,8 @@ export interface Database {
           subscription_tier?: 'free' | 'pro' | 'enterprise'
           storage_used?: number
           storage_limit?: number
+          birth?: string | null
+          address?: string | null
         }
         Update: {
           id?: string
@@ -47,6 +51,8 @@ export interface Database {
           subscription_tier?: 'free' | 'pro' | 'enterprise'
           storage_used?: number
           storage_limit?: number
+          birth?: string | null
+          address?: string | null
         }
       }
       user_preferences: {
