@@ -176,16 +176,26 @@ class DockerPlaywrightClient {
   }> {
     const endpoint = `${this.baseUrl}/health`;
     
-    const response = await fetch(endpoint, {
-      method: 'GET',
-      timeout: 5000
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-    if (!response.ok) {
-      throw new Error(`Health check failed: ${response.statusText}`);
+    try {
+      const response = await fetch(endpoint, {
+        method: 'GET',
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`Health check failed: ${response.statusText}`);
+      }
+
+      return response.json();
+    } catch (error) {
+      clearTimeout(timeoutId);
+      throw error;
     }
-
-    return response.json();
   }
 
   /**

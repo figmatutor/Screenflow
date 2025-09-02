@@ -96,7 +96,10 @@ export function DockerPlaywrightStudio() {
       setServiceHealth(health);
     } catch (error) {
       console.error('[DockerPlaywright] Health check failed:', error);
-      setServiceHealth({ status: 'ERROR', error: error.message });
+      setServiceHealth({ 
+        status: 'ERROR', 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      });
     }
   }, []);
 
