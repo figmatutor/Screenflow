@@ -47,10 +47,12 @@ export async function POST(request: NextRequest) {
     console.log(`[Auto Capture API v3.0] Mock 모드 비활성화됨 - 실제 크롤링 시작`);
     
     // 백그라운드에서 자동 캡처 작업 시작
-        await captureStore.set(sessionId, {
+    console.log(`[Auto Capture API] 세션 저장 시작: ${sessionId}`);
+    await captureStore.set(sessionId, {
       status: 'processing',
       createdAt: new Date()
     });
+    console.log(`[Auto Capture API] 세션 저장 완료: ${sessionId}`);
     
       // 비동기로 자동 캡처 실행 (실제 Puppeteer 크롤링 v3.0)
   startRealPuppeteerCrawling(url, sessionId, options).catch(error => {
@@ -192,16 +194,30 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const sessionId = searchParams.get('sessionId');
   
-  console.log(`[Auto Capture GET] Request for sessionId: ${sessionId}`);
+  console.log(`[Auto Capture GET] 🔍 요청 받음 - sessionId: ${sessionId}`);
+  console.log(`[Auto Capture GET] 전체 URL: ${request.url}`);
   
   if (!sessionId) {
+    console.error(`[Auto Capture GET] ❌ Session ID 누락`);
     return createErrorResponse('Session ID is required');
   }
   
+  console.log(`[Auto Capture GET] 세션 조회 시작: ${sessionId}`);
   const captureInfo = await captureStore.get(sessionId);
   
   if (!captureInfo) {
-    console.log(`[Auto Capture GET] Session not found: ${sessionId}`);
+    console.error(`[Auto Capture GET] ❌ 세션 없음: ${sessionId}`);
+    console.log(`[Auto Capture GET] 디버깅을 위한 전체 세션 목록 조회 중...`);
+    
+    // 디버깅: 모든 세션 확인
+    try {
+      const allSessions = await captureStore.getAllSessions();
+      console.log(`[Auto Capture GET] 전체 세션 수: ${Object.keys(allSessions).length}`);
+      console.log(`[Auto Capture GET] 세션 ID들:`, Object.keys(allSessions));
+    } catch (err) {
+      console.error(`[Auto Capture GET] 전체 세션 조회 실패:`, err);
+    }
+    
     return createErrorResponse('Session not found', 404);
   }
   

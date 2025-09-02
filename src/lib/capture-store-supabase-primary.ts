@@ -59,7 +59,8 @@ class SupabasePrimaryCaptureStore {
             error: session.error || null,
             created_at: session.createdAt.toISOString(),
             updated_at: new Date().toISOString(),
-            url: 'https://naver.com' // 기본값
+            url: 'https://example.com', // 기본값
+            user_id: null // 익명 사용자를 위해 명시적으로 NULL 설정
           };
 
           const { data, error } = await supabaseAdmin
@@ -92,14 +93,18 @@ class SupabasePrimaryCaptureStore {
   }
 
   async get(sessionId: string): Promise<CaptureSession | null> {
-    console.log(`[SupabasePrimaryCaptureStore] 세션 조회 ${sessionId}`);
+    console.log(`[SupabasePrimaryCaptureStore] 🔍 세션 조회 시작: ${sessionId}`);
+    console.log(`[SupabasePrimaryCaptureStore] 메모리 캐시 크기: ${this.memoryCache.size}`);
     
     // 1. 메모리 캐시 우선 확인
     const cachedSession = this.memoryCache.get(sessionId);
     if (cachedSession) {
-      console.log(`[SupabasePrimaryCaptureStore] 메모리에서 발견: ${sessionId} (${cachedSession.status})`);
+      console.log(`[SupabasePrimaryCaptureStore] ✅ 메모리에서 발견: ${sessionId} (${cachedSession.status})`);
       return cachedSession;
     }
+    
+    console.log(`[SupabasePrimaryCaptureStore] ❌ 메모리에 없음, Supabase 조회 시작`);
+    console.log(`[SupabasePrimaryCaptureStore] 현재 메모리 세션들:`, Array.from(this.memoryCache.keys()));
     
     // 2. Supabase에서 강제 조회
     if (supabaseAdmin) {
