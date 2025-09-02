@@ -1,0 +1,46 @@
+# 🛠️ Docker Compose Development Override
+version: '3.8'
+
+services:
+  # 🎭 Playwright Service (개발 환경)
+  playwright-service:
+    environment:
+      - NODE_ENV=development
+      - LOG_LEVEL=debug
+    volumes:
+      # 코드 핫 리로딩을 위한 볼륨 마운트
+      - ./docker/playwright-service:/app:ro
+      - /app/node_modules
+    command: ["npm", "run", "dev"]
+    ports:
+      - "9229:9229" # Node.js 디버깅 포트
+    
+  # 🔄 Redis (개발 환경)
+  redis:
+    ports:
+      - "6379:6379" # Redis CLI 접근용
+    
+  # 📊 개발용 도구들 추가
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: screenflow-redis-ui
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    networks:
+      - screenflow-network
+
+  # 📝 로그 수집기 (개발 환경)
+  logspout:
+    image: gliderlabs/logspout:latest
+    container_name: screenflow-logs
+    command: syslog://logs:514
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - playwright-service
+    networks:
+      - screenflow-network
