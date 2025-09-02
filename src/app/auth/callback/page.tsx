@@ -42,14 +42,14 @@ export default function AuthCallback() {
           const user = data.session.user;
           if (user) {
             try {
-              // 카카오 로그인 사용자 정보 처리 (닉네임 + 이메일 + 프로필 사진)
-              console.log('[Auth Callback] 카카오 사용자 정보:', {
+              // 카카오 로그인 사용자 정보 처리 (닉네임 + 이메일만, 프로필 사진 수집 안함)
+              console.log('[Auth Callback] 카카오 사용자 정보 (최소 수집):', {
                 id: user.id,
                 email: user.email,
                 provider: user.app_metadata?.provider,
                 nickname: user.user_metadata?.nickname,
-                profile_image: user.user_metadata?.picture,
-                collected_scopes: 'profile_nickname account_email profile_image'
+                // 프로필 사진은 수집하지 않음 (KOE205 에러 방지)
+                collected_scopes: 'profile_nickname account_email'
               });
 
               const { data: existingUser, error: userError } = await supabase
@@ -59,17 +59,14 @@ export default function AuthCallback() {
                 .single();
 
               if (userError && userError.code === 'PGRST116') {
-                // 새 사용자 생성 (닉네임, 이메일, 프로필 사진 포함)
+                // 새 사용자 생성 (닉네임과 이메일만 사용)
                 const displayName = user.user_metadata?.nickname || 
                                   user.email?.split('@')[0] || 
                                   '카카오 사용자';
-                
-                const avatarUrl = user.user_metadata?.picture || null;
 
                 console.log('[Auth Callback] 새 카카오 사용자 생성:', { 
                   displayName,
                   email: user.email,
-                  avatarUrl,
                   provider: 'kakao'
                 });
 
@@ -79,7 +76,6 @@ export default function AuthCallback() {
                     id: user.id,
                     email: user.email || '',
                     display_name: displayName,
-                    avatar_url: avatarUrl,
                     birth: null,
                     address: null,
                     created_at: new Date().toISOString(),
@@ -94,37 +90,21 @@ export default function AuthCallback() {
               } else if (existingUser) {
                 console.log('[Auth Callback] 기존 카카오 사용자 로그인:', existingUser.display_name);
                 
-                // 닉네임이나 프로필 이미지가 변경된 경우 업데이트
+                // 닉네임이 변경된 경우에만 업데이트
                 const currentNickname = user.user_metadata?.nickname;
-                const currentAvatarUrl = user.user_metadata?.picture || null;
-                
-                const needsUpdate = (
-                  (currentNickname && existingUser.display_name !== currentNickname) ||
-                  (existingUser.avatar_url !== currentAvatarUrl)
-                );
-                
-                if (needsUpdate) {
-                  const updateData: any = {
-                    updated_at: new Date().toISOString()
-                  };
-                  
-                  if (currentNickname && existingUser.display_name !== currentNickname) {
-                    updateData.display_name = currentNickname;
-                  }
-                  
-                  if (existingUser.avatar_url !== currentAvatarUrl) {
-                    updateData.avatar_url = currentAvatarUrl;
-                  }
-                  
+                if (currentNickname && existingUser.display_name !== currentNickname) {
                   const { error: updateError } = await supabase
                     .from('users')
-                    .update(updateData)
+                    .update({
+                      display_name: currentNickname,
+                      updated_at: new Date().toISOString()
+                    })
                     .eq('id', user.id);
 
                   if (updateError) {
-                    console.error('[Auth Callback] 사용자 정보 업데이트 오류:', updateError);
+                    console.error('[Auth Callback] 닉네임 업데이트 오류:', updateError);
                   } else {
-                    console.log('[Auth Callback] 사용자 정보 업데이트 완료:', updateData);
+                    console.log('[Auth Callback] 닉네임 업데이트 완료:', currentNickname);
                   }
                 }
               }

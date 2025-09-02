@@ -19,20 +19,20 @@ http://localhost:3001/auth/callback    (개발용)
 https://screenflow.pro/auth/callback   (프로덕션용)
 ```
 
-#### 🔐 동의항목 설정
+#### 🔐 동의항목 설정 (최소 수집)
 **경로:** 카카오 로그인 → 동의항목
 
-**필수 설정 항목:**
+**필수 설정 (최소 수집항목):**
 - ✅ 닉네임 (profile_nickname) - 사용자 표시명
 - ✅ 카카오계정(이메일) (account_email) - 연락처 정보
-- ✅ 프로필 사진 (profile_image) - 사용자 아바타
 
 **수집하지 않는 항목:**
 - ❌ OpenID Connect (openid) - 불필요
-- ❌ 기타 개인정보 - 서비스에 불필요한 정보
+- ❌ 프로필 사진 (profile_image) - 수집 안함
+- ❌ 기타 개인정보 - 수집 안함
 
-**개인정보 수집 원칙:**
-- 🎯 서비스 운영에 필요한 기본 정보 수집
+**개인정보 최소화 원칙:**
+- 🎯 서비스 운영에 꼭 필요한 정보만 수집
 - 🔒 사용자 프라이버시 보호 우선
 - 📝 투명한 정보 수집 정책
 
@@ -83,38 +83,36 @@ curl http://localhost:3001/api/check-kakao-config
 - 프로덕션 환경에서는 반드시 `https://` 사용
 - 로컬 개발에서만 `http://` 허용
 
-### 스코프 설정
+### 스코프 설정 (최소화)
 현재 요청하는 스코프:
 ```javascript
-scopes: 'profile_nickname account_email profile_image'
+scopes: 'profile_nickname account_email'
 ```
 
-**스코프 설명:**
+**스코프 설명 (최소 수집):**
 - `profile_nickname`: 카카오 닉네임 정보 (필수)
 - `account_email`: 카카오계정 이메일 주소 (필수)
-- `profile_image`: 카카오 프로필 사진 (사용자 아바타)
 
-**제외된 스코프:**
+**제거된 스코프:**
 - ❌ `openid`: OpenID Connect 불필요
+- ❌ `profile_image`: 프로필 사진 수집 안함
 
-**수집 정보 활용:**
-- 🎯 사용자 식별 및 표시
-- 👤 개인화된 사용자 경험
-- 📧 서비스 관련 연락
+**최소화 장점:**
+- 🚀 더 빠른 인증 과정
+- 🔒 향상된 사용자 프라이버시
+- ✅ 간단한 동의 절차
 
 ## 🔍 문제 해결
 
 ### 자주 발생하는 오류
 
 #### 1. `KOE205` 오류 ⚠️ (중요!)
-- **원인**: 카카오 개발자 콘솔의 동의항목 설정과 코드에서 요청하는 스코프가 일치하지 않음
+- **원인**: 카카오 개발자 콘솔에서 "사용 안함"으로 설정된 동의항목을 코드에서 요청
 - **해결**: 
-  - 카카오 개발자 콘솔에서 프로필 사진을 "사용함"으로 설정
-  - 코드에서 `profile_image` 스코프 포함
-  - **현재 설정**: `scopes: 'profile_nickname account_email profile_image'`
-- **확인 방법**: 
-  1. 카카오 로그인 → 동의항목에서 프로필 사진이 "사용함"으로 설정되어 있는지 확인
-  2. 코드에서 `profile_image` 스코프가 포함되어 있는지 확인
+  - 카카오 개발자 콘솔에서 프로필 사진을 "사용 안함"으로 설정한 경우
+  - 코드에서 `profile_image` 스코프를 제거해야 함
+  - **현재 설정**: `scopes: 'profile_nickname account_email'` (프로필 사진 제외)
+- **확인 방법**: 카카오 로그인 → 동의항목에서 프로필 사진이 "사용 안함"인지 확인
 
 #### 2. `redirect_uri_mismatch`
 - 카카오 콘솔의 Redirect URI 설정 확인
