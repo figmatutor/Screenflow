@@ -19,6 +19,7 @@ export interface Database {
           id: string
           email: string
           display_name: string | null
+          avatar_url: string | null
           created_at: string
           updated_at: string
           subscription_tier: 'free' | 'pro' | 'enterprise'
@@ -31,6 +32,7 @@ export interface Database {
           id: string
           email: string
           display_name?: string | null
+          avatar_url?: string | null
           created_at?: string
           updated_at?: string
           subscription_tier?: 'free' | 'pro' | 'enterprise'
@@ -43,6 +45,7 @@ export interface Database {
           id?: string
           email?: string
           display_name?: string | null
+          avatar_url?: string | null
           created_at?: string
           updated_at?: string
           subscription_tier?: 'free' | 'pro' | 'enterprise'
