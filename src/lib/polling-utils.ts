@@ -33,6 +33,7 @@ export class PollingManager {
       maxAttempts: 60, // 기본 5분 (5초 간격)
       interval: 3000, // 3초 간격으로 통일
       initialDelay: 2000, // 2초 후 시작
+      onProgress: options.onProgress ?? (() => {}), // ✅ 기본 더미 함수 제공
       onTimeout: () => {
         console.warn(`[PollingManager] 타임아웃: ${this.options.sessionId}`);
       },
