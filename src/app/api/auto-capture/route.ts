@@ -50,7 +50,8 @@ export async function POST(request: NextRequest) {
     console.log(`[Auto Capture API] 세션 저장 시작: ${sessionId}`);
     await captureStore.set(sessionId, {
       status: 'processing',
-      createdAt: new Date()
+      createdAt: new Date(),
+      url: url // 실제 요청 URL 저장
     });
     console.log(`[Auto Capture API] 세션 저장 완료: ${sessionId}`);
     
@@ -276,7 +277,8 @@ async function startRealPuppeteerCrawling(url: string, sessionId: string, option
       status: 'completed' as const,
       result,
       createdAt: new Date(),
-      finishedAt: new Date()
+      finishedAt: new Date(),
+      url: url // 완료 시에도 URL 유지
     };
 
     console.log(`[Real Auto Capture API] 세션 상태 업데이트 시작: ${sessionId} → completed`);
@@ -298,7 +300,8 @@ async function startRealPuppeteerCrawling(url: string, sessionId: string, option
       status: 'failed' as const,
       error: error instanceof Error ? error.message : '알 수 없는 오류',
       createdAt: new Date(),
-      finishedAt: new Date()
+      finishedAt: new Date(),
+      url: url // 실패 시에도 URL 유지
     };
 
     await captureStore.set(sessionId, captureInfo);

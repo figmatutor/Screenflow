@@ -101,17 +101,14 @@ export class AutoCaptureCrawler {
       console.log(`[AutoCaptureCrawler] 1단계 완료: 기본 페이지 캡처 ${initialPage.success ? '성공' : '실패'} (${initialPage.title})`);
 
       if (!initialPage.success) {
-        console.warn(`[AutoCaptureCrawler] 기본 페이지 캡처 실패, 크롤링 중단: ${initialPage.error}`);
-        // 기본 페이지만이라도 반환
-        return {
-          baseUrl,
-          crawledPages,
-          totalPages: 1,
-          successCount: 0,
-          failureCount: 1,
-          sessionId
-        };
+        console.error(`[AutoCaptureCrawler] 🚨 기본 페이지 캡처 실패: ${initialPage.error}`);
+        console.error(`[AutoCaptureCrawler] 기본 URL: ${baseUrl}`);
+        
+        // 기본 페이지 실패는 치명적 오류로 처리
+        throw new Error(`기본 페이지 캡처 실패: ${initialPage.error || 'Unknown error'}`);
       }
+      
+      console.log(`[AutoCaptureCrawler] ✅ 기본 페이지 캡처 성공: ${initialPage.title}`);
 
       // 깊이가 0보다 큰 경우에만 추가 링크 캡처
       if (finalOptions.maxDepth > 0) {

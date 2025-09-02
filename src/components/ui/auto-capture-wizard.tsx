@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { createAutoCapturePoll, PollingManager } from '@/lib/polling-utils';
 import { 
   Search, 
   Download, 
@@ -65,6 +66,9 @@ export function AutoCaptureWizard() {
   const [crawlResult, setCrawlResult] = useState<CrawlResult | null>(null);
   const [selectedPages, setSelectedPages] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  
+  // 폴링 관리자 참조
+  const pollingManagerRef = useRef<PollingManager | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
   
   // 크롤링 옵션
@@ -114,8 +118,8 @@ export function AutoCaptureWizard() {
       const data = await response.json();
       setSessionId(data.sessionId);
       
-      // 폴링 시작
-      pollCrawlStatus(data.sessionId);
+      // 통합 폴링 시작
+      startPolling(data.sessionId);
       
     } catch (error) {
       console.error('Auto crawling error:', error);
@@ -125,15 +129,41 @@ export function AutoCaptureWizard() {
     }
   };
 
-  // 크롤링 상태 폴링
-  const pollCrawlStatus = async (sessionId: string) => {
-    try {
-      const response = await fetch(`/api/auto-capture?sessionId=${sessionId}`);
-      const data = await response.json();
+  // 컴포넌트 언마운트 시 폴링 정리
+  useEffect(() => {
+    return () => {
+      if (pollingManagerRef.current) {
+        pollingManagerRef.current.stop();
+      }
+    };
+  }, []);
 
-      console.log('Auto crawling response:', data);
+  // 통합 폴링 시작
+  const startPolling = (sessionId: string) => {
+    // 기존 폴링이 있으면 중지
+    if (pollingManagerRef.current) {
+      pollingManagerRef.current.stop();
+    }
 
-      if (data.status === 'completed') {
+    pollingManagerRef.current = createAutoCapturePoll(
+      sessionId,
+      // onProgress
+      (data) => {
+        console.log('[AutoCaptureWizard] 진행 상황:', data);
+        // 진행 중인 페이지들 실시간 업데이트
+        if (data.crawledPages && data.crawledPages.length > 0) {
+          setCrawlResult(prev => prev ? {
+            ...prev,
+            crawledPages: data.crawledPages,
+            totalPages: data.totalPages || prev.totalPages,
+            successCount: data.successCount || prev.successCount,
+            failureCount: data.failureCount || prev.failureCount
+          } : null);
+        }
+      },
+      // onCompleted
+      (data) => {
+        console.log('[AutoCaptureWizard] ✅ 캡처 완료:', data);
         setCrawlResult({
           baseUrl: data.baseUrl,
           crawledPages: data.crawledPages,
@@ -150,20 +180,19 @@ export function AutoCaptureWizard() {
         
         setCurrentStep('preview');
         setIsLoading(false);
-      } else if (data.status === 'failed') {
-        setError(data.error || '자동 캡처에 실패했습니다.');
+        pollingManagerRef.current = null;
+      },
+      // onFailed
+      (errorMessage) => {
+        console.error('[AutoCaptureWizard] ❌ 캡처 실패:', errorMessage);
+        setError(errorMessage);
         setCurrentStep('input');
         setIsLoading(false);
-      } else {
-        // 계속 폴링
-        setTimeout(() => pollCrawlStatus(sessionId), 3000);
+        pollingManagerRef.current = null;
       }
-    } catch (error) {
-      console.error('Crawling polling error:', error);
-      setError('상태 확인 중 오류가 발생했습니다.');
-      setCurrentStep('input');
-      setIsLoading(false);
-    }
+    );
+
+    pollingManagerRef.current.start();
   };
 
   // 페이지 선택/해제

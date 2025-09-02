@@ -7,6 +7,7 @@ export interface CaptureSession {
   error?: string;
   createdAt: Date;
   finishedAt?: Date;
+  url?: string; // 실제 요청 URL 저장
 }
 
 class SupabasePrimaryCaptureStore {
@@ -59,7 +60,7 @@ class SupabasePrimaryCaptureStore {
             error: session.error || null,
             created_at: session.createdAt.toISOString(),
             updated_at: new Date().toISOString(),
-            url: 'https://example.com', // 기본값
+            url: session.url || 'https://example.com', // 실제 URL 또는 기본값
             user_id: null // 익명 사용자를 위해 명시적으로 NULL 설정
           };
 
