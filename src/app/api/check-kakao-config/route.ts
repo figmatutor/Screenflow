@@ -7,6 +7,8 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     currentOrigin: origin,
     currentHost: host,
+    currentScopes: 'profile_nickname account_email',
+    removedScopes: ['profile_image', 'openid'],
     expectedRedirectUrls: {
       development: 'http://localhost:3001/auth/callback',
       production: 'https://screenflow.pro/auth/callback',
@@ -23,6 +25,11 @@ export async function GET(request: NextRequest) {
         '1. Supabase 대시보드 → cpaqhythcmolwbdlygen 프로젝트',
         '2. Authentication → Providers → Kakao',
         '3. Redirect URL에 supabaseCallback URL 입력'
+      ],
+      kakaoScopes: [
+        '현재 요청 스코프: profile_nickname account_email',
+        '제거된 스코프: profile_image (KOE205 방지)',
+        '카카오 콘솔에서 프로필 사진을 "사용 안함"으로 설정하세요'
       ]
     }
   });
