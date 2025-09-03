@@ -119,12 +119,35 @@ export class BrowserLauncher {
             '--disable-default-apps',
             '--disable-background-timer-throttling',
             '--disable-backgrounding-occluded-windows',
-            '--disable-renderer-backgrounding'
+            '--disable-renderer-backgrounding',
+            // 네트워크 연결 개선
+            '--disable-web-security',
+            '--disable-features=VizDisplayCompositor',
+            '--enable-features=NetworkService,NetworkServiceLogging',
+            '--disable-background-networking',
+            '--disable-sync',
+            '--disable-translate',
+            '--disable-plugins',
+            '--force-color-profile=srgb',
+            '--metrics-recording-only',
+            '--use-mock-keychain',
+            // DNS 및 네트워크 설정
+            '--host-resolver-rules=MAP * ~NOTFOUND , EXCLUDE localhost',
+            '--disable-ipc-flooding-protection',
+            '--disable-field-trial-config',
+            // 타임아웃 설정
+            '--timeout=30000'
           ],
           defaultViewport: { 
             width: viewportWidth || 1440, 
             height: viewportHeight || 900 
-          }
+          },
+          timeout: 30000, // 30초 타임아웃
+          // 네트워크 연결 재시도 설정
+          ignoreDefaultArgs: ['--disable-extensions'],
+          handleSIGINT: false,
+          handleSIGTERM: false,
+          handleSIGHUP: false
         });
       }
     } catch (error) {

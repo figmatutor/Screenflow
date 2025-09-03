@@ -30,6 +30,7 @@ import {
   ENVIRONMENT_CONFIG 
 } from '@/lib/electron-utils';
 import { createAutoCapturePoll, PollingManager } from '@/lib/polling-utils';
+import { runNetworkDiagnostics, testNetworkConnection } from '@/lib/network-test';
 
 interface CrawledPage {
   url: string;
@@ -85,6 +86,37 @@ export function DesktopCaptureStudio() {
     };
   }, [pollingManager]);
 
+  // 네트워크 연결 테스트
+  const testConnection = useCallback(async () => {
+    if (!url.trim()) {
+      setError('URL을 입력해주세요.');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      console.log('[DesktopCapture] 네트워크 연결 테스트:', url);
+      
+      const testResult = await testNetworkConnection(url);
+      
+      if (testResult.success) {
+        setError(null);
+        console.log('[DesktopCapture] 연결 테스트 성공:', testResult);
+        // 성공 메시지 표시 (선택적)
+      } else {
+        setError(`연결 테스트 실패: ${testResult.error}`);
+        console.error('[DesktopCapture] 연결 테스트 실패:', testResult);
+      }
+    } catch (error) {
+      console.error('[DesktopCapture] 연결 테스트 오류:', error);
+      setError(error instanceof Error ? error.message : '연결 테스트 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [url]);
+
   // 자동 캡처 시작
   const startAutoCapture = useCallback(async () => {
     if (!url.trim()) {
@@ -98,6 +130,16 @@ export function DesktopCaptureStudio() {
 
     try {
       console.log('[DesktopCapture] 자동 캡처 시작:', url);
+
+      // 네트워크 연결 사전 테스트
+      console.log('[DesktopCapture] 네트워크 연결 사전 테스트...');
+      const networkTest = await testNetworkConnection(url, 5000);
+      
+      if (!networkTest.success) {
+        throw new Error(`네트워크 연결 실패: ${networkTest.error}`);
+      }
+      
+      console.log('[DesktopCapture] 네트워크 연결 확인됨, 캡처 시작...');
 
       const response = await fetch('/api/auto-capture', {
         method: 'POST',
@@ -419,24 +461,44 @@ export function DesktopCaptureStudio() {
                   </div>
                 )}
 
-                <Button
-                  onClick={startAutoCapture}
-                  disabled={!url.trim() || isLoading}
-                  className="w-full"
-                  size="lg"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      캡처 중...
-                    </>
-                  ) : (
-                    <>
-                      <Zap className="w-4 h-4 mr-2" />
-                      자동 캡처 시작
-                    </>
-                  )}
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={testConnection}
+                    disabled={!url.trim() || isLoading}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    {isLoading && currentStep === 'input' ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        연결 테스트 중...
+                      </>
+                    ) : (
+                      <>
+                        <Monitor className="w-4 h-4 mr-2" />
+                        연결 테스트
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    onClick={startAutoCapture}
+                    disabled={!url.trim() || isLoading}
+                    className="flex-2"
+                    size="lg"
+                  >
+                    {isLoading && currentStep === 'loading' ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        캡처 중...
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="w-4 h-4 mr-2" />
+                        자동 캡처 시작
+                      </>
+                    )}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

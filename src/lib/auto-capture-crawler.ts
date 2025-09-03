@@ -223,10 +223,43 @@ export class AutoCaptureCrawler {
         console.warn(`[AutoCaptureCrawler] 요청 실패 (${url}):`, request.url(), request.failure()?.errorText);
       });
       
-      await page.goto(url, { 
-        waitUntil: 'domcontentloaded', // networkidle2보다 더 관대한 설정
-        timeout: this.timeout 
-      });
+      // 네트워크 연결 재시도 로직
+      let lastError: Error | null = null;
+      let retryCount = 0;
+      const maxRetries = 3;
+      
+      while (retryCount < maxRetries) {
+        try {
+          console.log(`[AutoCaptureCrawler] 페이지 로드 시도 ${retryCount + 1}/${maxRetries}: ${url}`);
+          
+          await page.goto(url, { 
+            waitUntil: 'domcontentloaded',
+            timeout: this.timeout 
+          });
+          
+          // 성공하면 루프 탈출
+          console.log(`[AutoCaptureCrawler] 페이지 로드 성공: ${url}`);
+          break;
+          
+        } catch (error) {
+          lastError = error as Error;
+          retryCount++;
+          
+          console.log(`[AutoCaptureCrawler] 페이지 로드 실패 (시도 ${retryCount}/${maxRetries}): ${lastError.message}`);
+          
+          if (retryCount < maxRetries) {
+            // 재시도 전 잠시 대기
+            const delay = Math.min(1000 * retryCount, 3000); // 1초, 2초, 3초
+            console.log(`[AutoCaptureCrawler] ${delay}ms 후 재시도...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+          }
+        }
+      }
+      
+      // 모든 재시도 실패 시 에러 발생
+      if (retryCount >= maxRetries && lastError) {
+        throw lastError;
+      }
       console.log(`[AutoCaptureCrawler] 페이지 로드 완료: ${url}`);
       
       // 추가 로딩 대기
