@@ -4,6 +4,10 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  // Electron 빌드를 위한 정적 내보내기 설정
+  output: process.env.NODE_ENV === 'production' && process.env.BUILD_ELECTRON ? 'export' : undefined,
+  trailingSlash: true,
+  distDir: 'out',
   // Supabase functions와 Docker 관련 파일들을 빌드에서 제외
   webpack: (config, { isServer }) => {
     // TypeScript 컴파일에서 특정 디렉토리 제외

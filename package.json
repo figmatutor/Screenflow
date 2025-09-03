@@ -6,7 +6,12 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "electron": "concurrently \"npm run dev\" \"wait-on http://localhost:3001 && electron electron/main.js\"",
+    "electron:dev": "NODE_ENV=development npm run electron",
+    "build:electron": "npm run build && electron-builder",
+    "dist": "npm run build && electron-builder --publish=never",
+    "pack": "electron-builder --dir"
   },
   "dependencies": {
     "@hookform/resolvers": "^4",
@@ -64,12 +69,59 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/uuid": "^10.0.0",
+    "concurrently": "^9.2.1",
+    "electron": "^38.0.0",
+    "electron-builder": "^26.0.12",
     "eslint": "^9",
     "eslint-config-next": "15.1.0",
     "postcss": "^8",
     "tailwind-merge": "^2.5.2",
     "tailwindcss": "^3.4.1",
     "tailwindcss-animate": "^1.0.7",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wait-on": "^8.0.4"
+  },
+  "main": "electron/main.js",
+  "homepage": "./",
+  "build": {
+    "appId": "com.screenflow.desktop",
+    "productName": "ScreenFlow Desktop",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "out/**/*",
+      "electron/**/*",
+      "node_modules/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        }
+      ]
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }
