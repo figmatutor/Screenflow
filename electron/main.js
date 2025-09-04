@@ -6,7 +6,31 @@ const os = require('os');
 
 // 개발 환경 확인
 const isDev = process.env.NODE_ENV === 'development';
-const port = process.env.PORT || 3001;
+
+// 포트 동적 감지 함수
+async function findAvailablePort() {
+  const testPorts = [3000, 3001, 3002, 3003, 3004];
+  
+  for (const port of testPorts) {
+    try {
+      const response = await fetch(`http://localhost:${port}`, { 
+        method: 'HEAD',
+        signal: AbortSignal.timeout(2000)
+      });
+      if (response.ok) {
+        console.log(`[ScreenFlow] 활성 포트 발견: ${port}`);
+        return port;
+      }
+    } catch (error) {
+      // 포트가 응답하지 않으면 다음 포트 시도
+      continue;
+    }
+  }
+  
+  // 기본값 반환
+  console.warn('[ScreenFlow] 활성 포트를 찾을 수 없음, 기본값 3001 사용');
+  return 3001;
+}
 
 // 메인 윈도우 참조
 let mainWindow;
@@ -28,8 +52,15 @@ function ensureDownloadDirectory() {
 }
 
 // 메인 윈도우 생성
-function createMainWindow() {
+async function createMainWindow() {
   console.log('[ScreenFlow] 메인 윈도우 생성 중...');
+  
+  // 개발 환경에서 포트 동적 감지
+  let port = 3001;
+  if (isDev) {
+    port = await findAvailablePort();
+    console.log(`[ScreenFlow] 사용할 포트: ${port}`);
+  }
   
   mainWindow = new BrowserWindow({
     width: 1400,
@@ -51,7 +82,7 @@ function createMainWindow() {
 
   // 로드할 URL 결정
   const startUrl = isDev 
-    ? `http://localhost:${port}` 
+    ? `http://localhost:${port}/desktop` 
     : `file://${path.join(__dirname, '../out/index.html')}`;
 
   console.log(`[ScreenFlow] 로딩 URL: ${startUrl}`);
@@ -90,8 +121,14 @@ function createMainWindow() {
   mainWindow.webContents.on('will-navigate', (event, navigationUrl) => {
     const parsedUrl = new URL(navigationUrl);
     
-    // 외부 URL로의 네비게이션 방지
-    if (parsedUrl.origin !== `http://localhost:${port}` && !isDev) {
+    // 외부 URL로의 네비게이션 방지 (개발 환경에서는 localhost 허용)
+    if (isDev) {
+      const isLocalhost = parsedUrl.hostname === 'localhost' || parsedUrl.hostname === '127.0.0.1';
+      if (!isLocalhost) {
+        event.preventDefault();
+        shell.openExternal(navigationUrl);
+      }
+    } else {
       event.preventDefault();
       shell.openExternal(navigationUrl);
     }
@@ -275,18 +312,18 @@ function setupIpcHandlers() {
 }
 
 // 앱 이벤트 핸들러
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   console.log('[ScreenFlow] Electron 앱 준비 완료');
   
   ensureDownloadDirectory();
-  createMainWindow();
+  await createMainWindow();
   createApplicationMenu();
   setupIpcHandlers();
 
   // macOS에서 독에서 클릭 시 윈도우 재생성
-  app.on('activate', () => {
+  app.on('activate', async () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-      createMainWindow();
+      await createMainWindow();
     }
   });
 });

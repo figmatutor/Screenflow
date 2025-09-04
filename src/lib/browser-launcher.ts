@@ -131,12 +131,20 @@ export class BrowserLauncher {
             '--force-color-profile=srgb',
             '--metrics-recording-only',
             '--use-mock-keychain',
-            // DNS 및 네트워크 설정
-            '--host-resolver-rules=MAP * ~NOTFOUND , EXCLUDE localhost',
+            // DNS 및 네트워크 설정 (macOS 최적화)
             '--disable-ipc-flooding-protection',
             '--disable-field-trial-config',
-            // 타임아웃 설정
-            '--timeout=30000'
+            '--ignore-certificate-errors',
+            '--ignore-ssl-errors',
+            '--ignore-certificate-errors-spki-list',
+            '--disable-bundled-ppapi-flash',
+            '--disable-plugins-discovery',
+            '--disable-component-extensions-with-background-pages',
+            // macOS 특화 설정
+            '--use-system-default-printer',
+            '--disable-print-preview',
+            '--no-pings',
+            '--no-referrers'
           ],
           defaultViewport: { 
             width: viewportWidth || 1440, 
