@@ -9,27 +9,42 @@ const isDev = process.env.NODE_ENV === 'development';
 
 // 포트 동적 감지 함수
 async function findAvailablePort() {
-  const testPorts = [3000, 3001, 3002, 3003, 3004];
+  const testPorts = [3002, 3001, 3000, 3003, 3004]; // 3002를 먼저 시도
+  
+  console.log('[ScreenFlow] 포트 스캔 시작...');
   
   for (const port of testPorts) {
     try {
+      console.log(`[ScreenFlow] 포트 ${port} 테스트 중...`);
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000); // 3초 타임아웃
+      
       const response = await fetch(`http://localhost:${port}`, { 
         method: 'HEAD',
-        signal: AbortSignal.timeout(2000)
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'ScreenFlow-Electron/1.0'
+        }
       });
+      
+      clearTimeout(timeoutId);
+      
       if (response.ok) {
-        console.log(`[ScreenFlow] 활성 포트 발견: ${port}`);
+        console.log(`[ScreenFlow] ✅ 활성 포트 발견: ${port} (상태: ${response.status})`);
         return port;
+      } else {
+        console.log(`[ScreenFlow] ❌ 포트 ${port} 응답 오류: ${response.status}`);
       }
     } catch (error) {
-      // 포트가 응답하지 않으면 다음 포트 시도
+      console.log(`[ScreenFlow] ❌ 포트 ${port} 연결 실패: ${error.message}`);
       continue;
     }
   }
   
   // 기본값 반환
-  console.warn('[ScreenFlow] 활성 포트를 찾을 수 없음, 기본값 3001 사용');
-  return 3001;
+  console.warn('[ScreenFlow] ⚠️ 활성 포트를 찾을 수 없음, 기본값 3002 사용');
+  return 3002; // 기본값을 3002로 변경
 }
 
 // 메인 윈도우 참조

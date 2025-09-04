@@ -7,8 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "electron": "concurrently \"npm run dev\" \"wait-on http://localhost:3001 && electron electron/main.js\"",
+    "electron": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 http://localhost:3001 http://localhost:3002 && electron electron/main.js\"",
     "electron:dev": "NODE_ENV=development npm run electron",
+    "electron:smart": "concurrently \"npm run dev\" \"node scripts/start-electron.js\"",
     "build:electron": "npm run build && electron-builder",
     "dist": "npm run build && electron-builder --publish=never",
     "pack": "electron-builder --dir"
@@ -46,6 +47,7 @@
     "motion": "^12.23.12",
     "next": "15.1.0",
     "next-themes": "^0.4.3",
+    "node-fetch": "^3.3.2",
     "playwright": "^1.55.0",
     "puppeteer": "^24.16.2",
     "puppeteer-core": "^24.17.0",
@@ -99,7 +101,10 @@
       "target": [
         {
           "target": "dmg",
-          "arch": ["x64", "arm64"]
+          "arch": [
+            "x64",
+            "arm64"
+          ]
         }
       ]
     },
@@ -107,7 +112,9 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ]
     },
@@ -115,7 +122,9 @@
       "target": [
         {
           "target": "AppImage",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ]
     },
