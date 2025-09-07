@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { chromium } from 'playwright';
+import { browserService } from '@/lib/browser-service-client';
+import { supabaseUtils } from '@/lib/supabase';
 
 interface FlowCaptureRequest {
   url: string;
@@ -57,6 +59,15 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
+    // 사용자 인증 확인
+    const user = await supabaseUtils.getCurrentUser();
+    if (!user) {
+      return NextResponse.json(
+        { error: '인증이 필요합니다.' },
+        { status: 401 }
+      );
+    }
+
     // URL 정규화
     let url: string;
     try {
@@ -70,6 +81,58 @@ export async function POST(request: NextRequest) {
     }
 
     console.log(`[Flow Capture] ${url} 플로우 캡처 시작 (최대 ${maxSteps}단계)`);
+
+    // 🆕 하이브리드 방식: 외부 브라우저 서비스 우선 시도
+    const isServiceHealthy = await browserService.isHealthy();
+    
+    if (isServiceHealthy) {
+      console.log('[Flow Capture] 외부 브라우저 서비스 사용');
+      
+      try {
+        const result = await browserService.captureFlow(url, {
+          maxSteps,
+          triggerKeywords,
+          waitTime
+        });
+
+        if (result.success && result.data) {
+          // 결과를 데이터베이스에 저장
+          const captureRecord = await supabaseUtils.createCapture({
+            user_id: user.id,
+            url,
+            title: `플로우 캡처 (${result.data.totalSteps}단계)`,
+            description: `${url}의 플로우 캡처 결과`,
+            status: 'completed',
+            metadata: {
+              captureType: 'flow',
+              maxSteps,
+              actualSteps: result.data.totalSteps,
+              triggerKeywords,
+              service: 'external-browser-service',
+              timestamp: new Date().toISOString()
+            }
+          });
+
+          console.log(`[Flow Capture] 외부 서비스로 캡처 완료: ${result.data.totalSteps}단계`);
+
+          return NextResponse.json({
+            success: true,
+            url,
+            maxSteps,
+            actualSteps: result.data.totalSteps,
+            screenshots: result.data.screenshots,
+            captureId: captureRecord.data?.id,
+            service: 'external',
+            message: '플로우 캡처가 성공적으로 완료되었습니다.'
+          });
+        }
+      } catch (error) {
+        console.warn('[Flow Capture] 외부 서비스 실패, 로컬 처리로 fallback:', error);
+      }
+    }
+
+    // 🔄 Fallback: 로컬 Playwright 처리 (기존 로직)
+    console.log('[Flow Capture] 로컬 Playwright 처리로 fallback');
 
     const browser = await chromium.launch({
       headless: true,
