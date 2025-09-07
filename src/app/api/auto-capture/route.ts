@@ -3,6 +3,7 @@ import type { NextRequest as NextReq } from 'next/server';
 import { AutoCaptureCrawler, CrawlOptions } from '@/lib/auto-capture-crawler';
 import { captureStore } from '@/lib/capture-store-supabase-primary';
 import { createSuccessResponse, createErrorResponse, createOptionsResponse, createServerErrorResponse } from '@/lib/api-utils';
+import { browserService } from '@/lib/browser-service-client';
 
 // URL 정규화 함수
 function normalizeUrl(inputUrl: string): string {
@@ -55,8 +56,8 @@ export async function POST(request: NextRequest) {
     });
     console.log(`[Auto Capture API] 세션 저장 완료: ${sessionId}`);
     
-      // 비동기로 자동 캡처 실행 (실제 Puppeteer 크롤링 v3.0)
-  startRealPuppeteerCrawling(url, sessionId, options).catch(error => {
+      // 비동기로 하이브리드 자동 캡처 실행
+  startHybridAutoCrawling(url, sessionId, options).catch(error => {
     console.error(`[Auto Capture API] 백그라운드 캡처 실패: ${sessionId}`, error);
   });
     
@@ -261,7 +262,48 @@ export async function GET(request: NextRequest) {
   return createSuccessResponse(response);
 }
 
-// 실제 Puppeteer 기반 자동 캡처 프로세스 v3.0
+// 하이브리드 자동 캡처 프로세스 (외부 서비스 + 로컬 fallback)
+async function startHybridAutoCrawling(url: string, sessionId: string, options?: Partial<CrawlOptions>) {
+  try {
+    console.log(`[Hybrid Auto Capture] 하이브리드 캡처 시작: ${url} (세션: ${sessionId})`);
+    
+    // 1단계: 외부 브라우저 서비스 시도
+    const isExternalServiceHealthy = await browserService.isHealthy();
+    console.log(`[Hybrid Auto Capture] 외부 서비스 상태: ${isExternalServiceHealthy ? '정상' : '비정상'}`);
+    
+    if (isExternalServiceHealthy) {
+      try {
+        console.log(`[Hybrid Auto Capture] 외부 서비스로 자동 캡처 시도: ${sessionId}`);
+        
+        // 외부 서비스에 자동 캡처 요청 (아직 구현되지 않았으므로 임시로 스킵)
+        console.log(`[Hybrid Auto Capture] 외부 서비스 자동 캡처 기능 준비 중... 로컬 fallback 사용`);
+        throw new Error('외부 서비스 자동 캡처 기능 준비 중');
+        
+      } catch (externalError) {
+        console.warn(`[Hybrid Auto Capture] 외부 서비스 실패, 로컬 fallback 시도: ${externalError}`);
+      }
+    }
+    
+    // 2단계: 로컬 Puppeteer fallback (모킹 모드)
+    console.log(`[Hybrid Auto Capture] 로컬 모킹 모드로 fallback: ${sessionId}`);
+    await startMockAutoCaptureProcess(url, sessionId, options);
+    
+  } catch (error) {
+    console.error(`[Hybrid Auto Capture] 하이브리드 캡처 실패: ${sessionId}`, error);
+    
+    const captureInfo = {
+      status: 'failed' as const,
+      error: error instanceof Error ? error.message : '알 수 없는 오류',
+      createdAt: new Date(),
+      finishedAt: new Date(),
+      url: url
+    };
+
+    await captureStore.set(sessionId, captureInfo);
+  }
+}
+
+// 실제 Puppeteer 기반 자동 캡처 프로세스 v3.0 (백업용)
 async function startRealPuppeteerCrawling(url: string, sessionId: string, options?: Partial<CrawlOptions>) {
   let crawler: AutoCaptureCrawler | null = null;
   try {
