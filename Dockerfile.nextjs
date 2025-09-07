@@ -1,4 +1,4 @@
-# Railway 브라우저 서비스용 Dockerfile
+# Next.js 앱용 Dockerfile (Railway 대안)
 FROM node:18-slim
 
 # 시스템 의존성 설치
@@ -29,7 +29,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Chrome 설치
+# Chrome 설치 (Puppeteer용)
 RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
     && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
     && apt-get update \
@@ -39,19 +39,27 @@ RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key
 # 작업 디렉토리 설정
 WORKDIR /app
 
-# 브라우저 서비스 파일만 복사
-COPY railway-browser-service/package*.json ./
-RUN npm ci --only=production
+# package.json과 package-lock.json 복사
+COPY package*.json ./
 
-# 브라우저 서비스 코드 복사
-COPY railway-browser-service/ ./
+# 모든 의존성 설치 (devDependencies 포함)
+RUN npm ci
+
+# 애플리케이션 코드 복사
+COPY . .
+
+# Next.js 빌드
+RUN npm run build
+
+# 불필요한 devDependencies 제거
+RUN npm prune --production
 
 # 포트 설정
-EXPOSE 3001
+EXPOSE 3000
 
 # 헬스체크
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:3001/health || exit 1
+    CMD curl -f http://localhost:3000/api/health || exit 1
 
-# 브라우저 서비스 실행
+# 애플리케이션 실행
 CMD ["npm", "start"]
